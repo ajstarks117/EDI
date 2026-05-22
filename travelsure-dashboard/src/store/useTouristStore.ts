@@ -9,6 +9,7 @@ export interface TouristPosition extends Position {
   id: string;
   lastUpdated: number;
   status: 'safe' | 'warning' | 'critical' | 'offline';
+  trail: [number, number][];
 }
 
 interface TouristState {
@@ -23,6 +24,10 @@ export const useTouristStore = create<TouristState>((set) => ({
   selectedTourist: null,
   updatePosition: (id, position, status) => set((state) => {
     const existing = state.positions[id];
+    const newPoint: [number, number] = [position.lng, position.lat];
+    const oldTrail = existing?.trail || [];
+    const trail = [...oldTrail, newPoint].slice(-10);
+
     return {
       positions: {
         ...state.positions,
@@ -30,7 +35,8 @@ export const useTouristStore = create<TouristState>((set) => ({
           id, 
           ...position, 
           lastUpdated: Date.now(),
-          status: status || existing?.status || 'safe'
+          status: status || existing?.status || 'safe',
+          trail
         }
       }
     };
