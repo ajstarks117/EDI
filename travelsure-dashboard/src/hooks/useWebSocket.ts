@@ -42,9 +42,9 @@ export function useWebSocket() {
       });
 
       // Domain event listeners
-      socket.on('tourist:location', (data: { id: string; lat: number; lng: number }) => {
+      socket.on('tourist:location', (data: { id: string; lat: number; lng: number; status?: 'safe' | 'warning' | 'critical' | 'offline' }) => {
         if (data?.id && data?.lat != null && data?.lng != null) {
-          updatePosition(data.id, { lat: data.lat, lng: data.lng });
+          updatePosition(data.id, { lat: data.lat, lng: data.lng }, data.status);
         }
       });
 
