@@ -10,7 +10,7 @@ class AppTheme {
       brightness: Brightness.light,
       primaryColor: UiConstants.primary,
       scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         color: Colors.white,
         elevation: 2,
         margin: EdgeInsets.all(UiConstants.spaceSM),
@@ -19,7 +19,7 @@ class AppTheme {
         primary: UiConstants.primary,
         secondary: UiConstants.secondary,
         error: UiConstants.emergencyRed,
-        background: Color(0xFFF8FAFC),
+        surface: Color(0xFFF8FAFC),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
