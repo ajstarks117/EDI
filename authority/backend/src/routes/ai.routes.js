@@ -5,6 +5,8 @@ const { verifyToken }      = require('../middleware/auth');
 const { requireAuthority } = require('../middleware/authorityAuth');
 const aiController         = require('../controllers/aiController');
 
+// LLM Chat / Emergency query
+router.post('/chat',                   verifyToken, aiController.chat);
 // Risk score prediction for a tourist / zone
 router.post('/risk-score',             verifyToken, requireAuthority, aiController.predictRiskScore);
 // Natural-language alert summarisation

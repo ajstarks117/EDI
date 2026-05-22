@@ -18,4 +18,7 @@ router.post('/:id/contacts', verifyToken, touristController.addContact);
 // Blockchain identity — tourist fetches their own stored record
 router.get('/:id/identity',  verifyToken, blockchainController.getTouristOwnIdentity);
 
+// Safety Score
+router.get('/:id/safety-score', verifyToken, touristController.getSafetyScore);
+
 module.exports = router;
