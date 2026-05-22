@@ -12,7 +12,7 @@ import {
 
 export default function Sidebar() {
   const navItems = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Alerts', path: '/alerts', icon: Bell },
     { label: 'Live Map', path: '/map', icon: Map },
     { label: 'Tourists', path: '/tourists', icon: Users },
@@ -45,11 +45,12 @@ export default function Sidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                end
                 className={({ isActive }) => `
                   flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 group
                   ${isActive 
                     ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shadow-glow-indigo' 
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1E293B]/50 hover:border hover:border-transparent'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1E293B]/50 border border-transparent'
                   }
                 `}
               >
@@ -78,3 +79,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+

@@ -1,34 +1,108 @@
+/* ── Google Fonts ─────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ══════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — CSS Custom Properties
+   Light-mode defaults sit on :root.
+   The .dark class (applied to <html>) swaps the palette.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Playbook colours ──────────────────────────────── */
+  --color-primary-navy:   #1A3C5E;
+  --color-safety-teal:    #0D7A8C;
+  --color-alert-red:      #D32F2F;
+  --color-warning-amber:  #F0A500;
+  --color-success-green:  #2E7D32;
+  --color-off-white:      #F5F7FA;
+  --color-dark-text:      #1C2B3A;
+  --color-muted-text:     #607080;
+
+  /* ── Surfaces (light mode) ─────────────────────────── */
+  --surface-bg:     #F5F7FA;
+  --surface-card:   #FFFFFF;
+  --surface-border: #DDE3EC;
+
+  /* ── Typography ────────────────────────────────────── */
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', 'Inter', sans-serif;
+}
+
+.dark {
+  /* ── Surface overrides for dark mode ───────────────── */
+  --surface-bg:     #0B0F19;
+  --surface-card:   #1E293B;
+  --surface-border: #334155;
+
+  /* Playbook colours stay the same across modes, but we
+     shift text contrast so labels remain readable. */
+  --color-off-white:  #F1F5F9;
+  --color-dark-text:  #F1F5F9;
+  --color-muted-text: #94A3B8;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BASE LAYER
+   ══════════════════════════════════════════════════════════════════ */
 @layer base {
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
-    background-color: #0B0F19; /* Deep space dark background */
-    color: #F8FAFC; /* Light slate text */
-    font-family: 'Inter', sans-serif;
+    background-color: var(--surface-bg);
+    color: var(--color-dark-text);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
+
+  h1 { font-size: 2.25rem;  line-height: 2.5rem; }    /* 36px */
+  h2 { font-size: 1.5rem;   line-height: 2rem; }      /* 24px */
+  h3 { font-size: 1.25rem;  line-height: 1.75rem; }   /* 20px */
+  h4 { font-size: 1.125rem; line-height: 1.75rem; }   /* 18px */
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   COMPONENT UTILITIES
+   ══════════════════════════════════════════════════════════════════ */
 @layer components {
-  /* Premium Glassmorphism Panel style for cards, modals, and sidebar */
+  /* Glassmorphism panel — cards, sidebar, modals */
   .glass-panel {
     background: rgba(30, 41, 59, 0.45);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.25s ease;
   }
 
-  /* Critical glowing elements */
+  /* Light-mode glass variant */
+  :root:not(.dark) .glass-panel {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: var(--surface-border);
+  }
+
+  /* Glow borders for alert severity */
   .glow-border-red {
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(211, 47, 47, 0.3);
+    box-shadow: 0 0 15px rgba(211, 47, 47, 0.15);
+  }
+
+  .glow-border-teal {
+    border: 1px solid rgba(13, 122, 140, 0.3);
+    box-shadow: 0 0 15px rgba(13, 122, 140, 0.1);
   }
 
   .glow-border-indigo {
@@ -36,39 +110,41 @@
     box-shadow: 0 0 15px rgba(99, 102, 241, 0.10);
   }
 
-  /* Custom Premium Scrollbars */
+  /* ── Premium Scrollbar ─────────────────────────────── */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-  
+
   ::-webkit-scrollbar-track {
-    background: #0B0F19;
+    background: var(--surface-bg);
   }
-  
+
   ::-webkit-scrollbar-thumb {
-    background: #1E293B;
+    background: var(--surface-border);
     border-radius: 3px;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+    background: var(--color-muted-text);
   }
 }
 
-/* Pulse animation for active SOS coordinates */
+/* ══════════════════════════════════════════════════════════════════
+   KEYFRAMES
+   ══════════════════════════════════════════════════════════════════ */
 @keyframes emergencyPulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 15px rgba(211, 47, 47, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
   }
 }
 
