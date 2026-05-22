@@ -1,0 +1,5 @@
+# Netlify Single Page Application (SPA) Router Redirection Rules
+# Redirect all request paths to the primary index.html entry point
+# so that React Router can handle routing natively on the client.
+
+/*    /index.html   200

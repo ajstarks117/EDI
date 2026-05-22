@@ -1,0 +1,226 @@
+/* ── Google Fonts ─────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — CSS Custom Properties
+   Light-mode defaults sit on :root.
+   The .dark class (applied to <html>) swaps the palette.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Playbook colours ──────────────────────────────── */
+  --color-primary-navy:   #1A3C5E;
+  --color-safety-teal:    #0D7A8C;
+  --color-alert-red:      #D32F2F;
+  --color-warning-amber:  #F0A500;
+  --color-success-green:  #2E7D32;
+  --color-off-white:      #F5F7FA;
+  --color-dark-text:      #1C2B3A;
+  --color-muted-text:     #607080;
+
+  /* ── Surfaces (light mode) ─────────────────────────── */
+  --surface-bg:     #F5F7FA;
+  --surface-card:   #FFFFFF;
+  --surface-border: #DDE3EC;
+
+  /* ── Sidebar (light mode) ──────────────────────────── */
+  --sidebar-bg:       #F0F3F8;
+  --sidebar-active:   #E8EDFF;
+  --sidebar-border:   #DDE3EC;
+  --sidebar-text:     #475569;
+  --sidebar-text-active: #4F46E5;
+  --sidebar-header-bg: #E8ECF2;
+
+  /* ── Typography ────────────────────────────────────── */
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', 'Inter', sans-serif;
+}
+
+.dark {
+  /* ── Surface overrides for dark mode ───────────────── */
+  --surface-bg:     #0B0F19;
+  --surface-card:   #1E293B;
+  --surface-border: #334155;
+
+  /* ── Sidebar (dark mode) ───────────────────────────── */
+  --sidebar-bg:       #0F172A;
+  --sidebar-active:   rgba(99, 102, 241, 0.1);
+  --sidebar-border:   rgba(51, 65, 85, 0.4);
+  --sidebar-text:     #94A3B8;
+  --sidebar-text-active: #818CF8;
+  --sidebar-header-bg: rgba(11, 15, 25, 0.6);
+
+  /* Playbook colours stay the same across modes, but we
+     shift text contrast so labels remain readable. */
+  --color-off-white:  #F1F5F9;
+  --color-dark-text:  #F1F5F9;
+  --color-muted-text: #94A3B8;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BASE LAYER
+   ══════════════════════════════════════════════════════════════════ */
+@layer base {
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--surface-bg);
+    color: var(--color-dark-text);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  h1 { font-size: 2.25rem;  line-height: 2.5rem; }    /* 36px */
+  h2 { font-size: 1.5rem;   line-height: 2rem; }      /* 24px */
+  h3 { font-size: 1.25rem;  line-height: 1.75rem; }   /* 20px */
+  h4 { font-size: 1.125rem; line-height: 1.75rem; }   /* 18px */
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   COMPONENT UTILITIES
+   ══════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* ── Themeable Surface Transitions ──────────────────── */
+  .theme-transition {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* Glassmorphism panel — cards, sidebar, modals */
+  .glass-panel {
+    background: rgba(30, 41, 59, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.3s ease;
+  }
+
+  /* Light-mode glass variant */
+  :root:not(.dark) .glass-panel {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: var(--surface-border);
+  }
+
+  /* Glow borders for alert severity */
+  .glow-border-red {
+    border: 1px solid rgba(211, 47, 47, 0.3);
+    box-shadow: 0 0 15px rgba(211, 47, 47, 0.15);
+  }
+
+  .glow-border-teal {
+    border: 1px solid rgba(13, 122, 140, 0.3);
+    box-shadow: 0 0 15px rgba(13, 122, 140, 0.1);
+  }
+
+  .glow-border-indigo {
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.10);
+  }
+
+  /* ── Alert Severity Badges (accessible in both modes) ── */
+  .alert-p0 {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  :root:not(.dark) .alert-p0 {
+    background-color: rgba(211, 47, 47, 0.1);
+    color: #B91C1C;
+    border-color: rgba(211, 47, 47, 0.25);
+  }
+
+  .alert-p1 {
+    background-color: rgba(249, 115, 22, 0.15);
+    color: #FB923C;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+  :root:not(.dark) .alert-p1 {
+    color: #C2410C;
+    border-color: rgba(249, 115, 22, 0.25);
+  }
+
+  .alert-p2 {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  :root:not(.dark) .alert-p2 {
+    color: #B45309;
+    border-color: rgba(245, 158, 11, 0.25);
+  }
+
+  /* ── Premium Scrollbar ─────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--surface-bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--surface-border);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted-text);
+  }
+
+  /* Print Styles for Incident Reports */
+  @media print {
+    @page {
+      margin: 20mm;
+      size: A4 portrait;
+    }
+    
+    body {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      background: white !important;
+    }
+
+    .print-avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   KEYFRAMES
+   ══════════════════════════════════════════════════════════════════ */
+@keyframes emergencyPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 15px rgba(211, 47, 47, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
+  }
+}
+
+.pulse-emergency {
+  animation: emergencyPulse 2s infinite;
+}
+
