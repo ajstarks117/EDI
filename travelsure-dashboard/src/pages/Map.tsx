@@ -27,13 +27,20 @@ export default function Map() {
   const map = useRef<mapboxgl.Map | null>(null);
   
   const { positions, selectedTourist, selectTourist } = useTouristStore();
-  const { rightPanelOpen, setRightPanelOpen } = useUIStore();
+  const { rightPanelOpen, setRightPanelOpen, flyToLocation, setFlyToLocation } = useUIStore();
   
   // Ref to hold current positions so we can easily update the source
   const positionsRef = useRef(positions);
   useEffect(() => {
     positionsRef.current = positions;
   }, [positions]);
+
+  useEffect(() => {
+    if (flyToLocation && map.current) {
+      map.current.flyTo({ center: flyToLocation, zoom: 15, essential: true });
+      setFlyToLocation(null);
+    }
+  }, [flyToLocation, setFlyToLocation]);
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
@@ -78,6 +85,29 @@ export default function Map() {
         data: { type: 'FeatureCollection', features: [] }
       });
 
+      // Add Trail Source
+      m.addSource('tourist-trail', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+
+      // Add Trail Layer (below markers)
+      m.addLayer({
+        id: 'tourist-trail-layer',
+        type: 'line',
+        source: 'tourist-trail',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#818CF8', // Indigo 400
+          'line-width': 3,
+          'line-opacity': 0.8,
+          'line-dasharray': [1, 2]
+        }
+      });
+
       // Add Symbol Layer for Markers
       m.addLayer({
         id: 'tourists-layer',
@@ -117,32 +147,54 @@ export default function Map() {
 
   // Sync positions from store to map source
   const updateGeoJsonSource = () => {
-    if (!map.current || !map.current.getSource('tourists')) return;
+    if (!map.current) return;
     
-    const features: GeoJSON.Feature[] = Object.values(positionsRef.current).map(pos => ({
-      type: 'Feature',
-      properties: {
-        id: pos.id,
-        status: pos.status,
-        lastUpdated: pos.lastUpdated
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [pos.lng, pos.lat]
-      }
-    }));
+    // Update markers
+    const touristsSource = map.current.getSource('tourists') as mapboxgl.GeoJSONSource;
+    if (touristsSource) {
+      const features: GeoJSON.Feature[] = Object.values(positionsRef.current).map(pos => ({
+        type: 'Feature',
+        properties: { id: pos.id, status: pos.status, lastUpdated: pos.lastUpdated },
+        geometry: { type: 'Point', coordinates: [pos.lng, pos.lat] }
+      }));
+      touristsSource.setData({ type: 'FeatureCollection', features });
+    }
 
-    const source = map.current.getSource('tourists') as mapboxgl.GeoJSONSource;
-    source.setData({
-      type: 'FeatureCollection',
-      features
-    });
+    // Update trail
+    const trailSource = map.current.getSource('tourist-trail') as mapboxgl.GeoJSONSource;
+    if (trailSource) {
+      const features: GeoJSON.Feature[] = [];
+      // Show trail only for the selected tourist to avoid map clutter
+      if (selectedTourist && positionsRef.current[selectedTourist]?.trail.length > 1) {
+        features.push({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: positionsRef.current[selectedTourist].trail
+          }
+        });
+      }
+      trailSource.setData({ type: 'FeatureCollection', features });
+    }
   };
 
-  // Run the update whenever positions change
+  // Throttled update whenever positions or selected tourist changes
+  const updateTimeoutRef = useRef<number | null>(null);
   useEffect(() => {
-    updateGeoJsonSource();
-  }, [positions]);
+    if (updateTimeoutRef.current) return; // Already scheduled
+    updateTimeoutRef.current = setTimeout(() => {
+      updateGeoJsonSource();
+      updateTimeoutRef.current = null;
+    }, 250);
+
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+        updateTimeoutRef.current = null;
+      }
+    };
+  }, [positions, selectedTourist]);
 
   const activeTourist = selectedTourist ? positions[selectedTourist] : null;
 

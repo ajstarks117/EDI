@@ -11,11 +11,13 @@ interface UIState {
   rightPanelOpen: boolean;
   toasts: Toast[];
   connectionStatus: 'connected' | 'connecting' | 'disconnected';
+  flyToLocation: [number, number] | null;
   toggleDarkMode: () => void;
   setRightPanelOpen: (isOpen: boolean) => void;
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
   setConnectionStatus: (status: 'connected' | 'connecting' | 'disconnected') => void;
+  setFlyToLocation: (loc: [number, number] | null) => void;
 }
 
 // Initial dark mode check, guarding against SSR
@@ -33,6 +35,7 @@ export const useUIStore = create<UIState>((set) => ({
   rightPanelOpen: false,
   toasts: [],
   connectionStatus: 'disconnected',
+  flyToLocation: null,
   toggleDarkMode: () => set((state) => {
     const newMode = !state.darkMode;
     if (typeof window !== 'undefined') {
@@ -51,5 +54,6 @@ export const useUIStore = create<UIState>((set) => ({
   removeToast: (id) => set((state) => ({
     toasts: state.toasts.filter((t) => t.id !== id)
   })),
-  setConnectionStatus: (status) => set({ connectionStatus: status })
+  setConnectionStatus: (status) => set({ connectionStatus: status }),
+  setFlyToLocation: (loc) => set({ flyToLocation: loc })
 }));
