@@ -12,38 +12,59 @@ interface UIState {
   toasts: Toast[];
   connectionStatus: 'connected' | 'connecting' | 'disconnected';
   flyToLocation: [number, number] | null;
+  notificationPermission: NotificationPermission | 'default';
+  bannerDismissed: boolean;
   toggleDarkMode: () => void;
   setRightPanelOpen: (isOpen: boolean) => void;
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
   setConnectionStatus: (status: 'connected' | 'connecting' | 'disconnected') => void;
   setFlyToLocation: (loc: [number, number] | null) => void;
+  setNotificationPermission: (permission: NotificationPermission) => void;
+  dismissBanner: () => void;
 }
 
-// Initial dark mode check, guarding against SSR
-const getInitialDarkMode = () => {
-  if (typeof window !== 'undefined') {
-    return document.documentElement.classList.contains('dark') || 
-           window.matchMedia('(prefers-color-scheme: dark)').matches || 
-           true; // Ops dashboards default to true
+// Initial dark mode: check localStorage first, then prefers-color-scheme, default to dark for ops
+const getInitialDarkMode = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  const stored = localStorage.getItem('travelsure-dark-mode');
+  if (stored !== null) return stored === 'true';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches || true;
+};
+
+// Sync the .dark class immediately so there's no flash
+const applyDarkClass = (isDark: boolean) => {
+  if (typeof window === 'undefined') return;
+  const root = document.documentElement;
+  if (isDark) {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
   }
-  return true;
+};
+
+// Apply on module load
+const initialDark = getInitialDarkMode();
+applyDarkClass(initialDark);
+
+const getInitialBannerDismissed = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('travelsure-banner-dismissed') === 'true';
 };
 
 export const useUIStore = create<UIState>((set) => ({
-  darkMode: getInitialDarkMode(),
+  darkMode: initialDark,
   rightPanelOpen: false,
   toasts: [],
   connectionStatus: 'disconnected',
   flyToLocation: null,
+  notificationPermission: typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default',
+  bannerDismissed: getInitialBannerDismissed(),
   toggleDarkMode: () => set((state) => {
     const newMode = !state.darkMode;
+    applyDarkClass(newMode);
     if (typeof window !== 'undefined') {
-      if (newMode) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      localStorage.setItem('travelsure-dark-mode', String(newMode));
     }
     return { darkMode: newMode };
   }),
@@ -55,5 +76,12 @@ export const useUIStore = create<UIState>((set) => ({
     toasts: state.toasts.filter((t) => t.id !== id)
   })),
   setConnectionStatus: (status) => set({ connectionStatus: status }),
-  setFlyToLocation: (loc) => set({ flyToLocation: loc })
+  setFlyToLocation: (loc) => set({ flyToLocation: loc }),
+  setNotificationPermission: (permission) => set({ notificationPermission: permission }),
+  dismissBanner: () => set(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('travelsure-banner-dismissed', 'true');
+    }
+    return { bannerDismissed: true };
+  })
 }));

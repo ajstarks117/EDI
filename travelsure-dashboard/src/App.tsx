@@ -7,6 +7,7 @@ import Tourists from './pages/Tourists';
 import Geofences from './pages/Geofences';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import Help from './pages/Help';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/geofences" element={<Geofences />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/help" element={<Help />} />
         </Routes>
       </Layout>
     </Router>
