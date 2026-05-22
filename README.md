@@ -8,14 +8,15 @@ Developed under SIH Problem Statement ID 25002.
 
 ## 📂 Project Structure
 
-This repository is organized as a modular multi-project workspace to support independent, concurrent development across the frontend, mobile, backend, and blockchain teams:
+This repository is organized as a modular multi-project workspace to support independent, concurrent development across the tourist and authority sub-systems:
 
 ```text
 EDI/
-├── traveltrek-tourist-app/         # Flutter Mobile Application (Tourist Side)
-├── traveltrek-authority-dashboard/ # React Web Dashboard (Authority Side - Police/Rescue)
-├── traveltrek-backend/             # Node.js + Express + TypeScript Shared Backend & WebSocket Server
-├── traveltrek-blockchain/          # Ethereum Smart Contracts & Web3 Identity Layer
+├── tourist/                        # Tourist Mobile Application (Flutter)
+├── authority/                      # Authority Ecosystem
+│   ├── dashboard/                  # React Web Dashboard (Police/Rescue Control Room)
+│   ├── backend/                    # Node.js + Express API & WebSocket Server
+│   └── blockchain/                 # Hardhat Smart Contracts & Web3 Identity Layer
 ├── docker-compose.yml              # Local database & services orchestration
 ├── .gitignore                      # Workspace-wide git ignore rules
 └── README.md                       # This developer documentation
@@ -55,13 +56,13 @@ docker-compose up -d
 ### Step 2: Running the Backend
 1. Navigate to the backend directory:
    ```bash
-   cd traveltrek-backend
+   cd authority/backend
    ```
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Set up the local `.env` variables (see `traveltrek-backend/.env.example`).
+3. Set up the local `.env` variables (see `authority/backend/.env.example`).
 4. Run the development server:
    ```bash
    npm run dev
@@ -70,7 +71,7 @@ docker-compose up -d
 ### Step 3: Running the Authority Dashboard
 1. Navigate to the dashboard directory:
    ```bash
-   cd traveltrek-authority-dashboard
+   cd authority/dashboard
    ```
 2. Install dependencies:
    ```bash
@@ -84,7 +85,7 @@ docker-compose up -d
 ### Step 4: Running the Tourist Mobile App
 1. Navigate to the app directory:
    ```bash
-   cd traveltrek-tourist-app
+   cd tourist
    ```
 2. Fetch dependencies:
    ```bash
