@@ -32,10 +32,10 @@ pip-delete-this-directory.txt
 .packages
 .pub-cache/
 .pub/
-/lib/generated_plugin_registrant.dart
-/android/key.properties
-/ios/Flutter/Generated.xcconfig
-/ios/Flutter/flutter_export_environment.sh
+**/lib/generated_plugin_registrant.dart
+**/android/key.properties
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
 
 # Docker local data directories
 pgdata/
