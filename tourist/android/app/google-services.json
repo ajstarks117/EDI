@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "61066629162",
+    "project_id": "travel-trek-b647a",
+    "storage_bucket": "travel-trek-b647a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:61066629162:android:d782c8ba7f35be511ab353",
+        "android_client_info": {
+          "package_name": "com.Group10.Travel_trek"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCh_kBEwKaOuNRSrgJk7f-B3iB8nX30TLE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

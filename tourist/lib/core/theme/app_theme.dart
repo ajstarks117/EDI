@@ -8,28 +8,23 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      primaryColor: UiConstants.primary,
-      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-      cardTheme: const CardThemeData(
-        color: Colors.white,
-        elevation: 2,
-        margin: EdgeInsets.all(UiConstants.spaceSM),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primaryNavy,
+        brightness: Brightness.light,
+        primary: AppColors.primaryNavy,
+        secondary: AppColors.safetyTeal,
+        error: AppColors.alertRed,
       ),
-      colorScheme: const ColorScheme.light(
-        primary: UiConstants.primary,
-        secondary: UiConstants.secondary,
-        error: UiConstants.emergencyRed,
-        surface: Color(0xFFF8FAFC),
-      ),
+      scaffoldBackgroundColor: AppColors.offWhite,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF1E293B),
+        backgroundColor: AppColors.primaryNavy,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: UiConstants.primary,
+          backgroundColor: AppColors.primaryNavy,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(
@@ -40,6 +35,11 @@ class AppTheme {
             borderRadius: BorderRadius.circular(UiConstants.radiusMD),
           ),
         ),
+      ),
+      cardTheme: const CardThemeData(
+        color: Colors.white,
+        elevation: 2,
+        margin: EdgeInsets.all(UiConstants.spaceSM),
       ),
     );
   }
