@@ -1,70 +1,65 @@
-# TravelTrek Backend Service
+# TravelSure Backend — Quick Start
 
-This is the central Express.js and TypeScript server. It acts as the API and WebSockets server for the TravelTrek project, routing real-time GPS locations and emergency broadcasts between the mobile application and the web dashboard.
+## Prerequisites
+- Node.js 20+
+- PostgreSQL 15 (or use `docker-compose up -d` from repo root)
+- A Firebase project with Admin SDK credentials
 
-## 📂 Project Structure
+## Setup
 
-```text
-src/
-├── index.ts                # Server initialization, routing, and WebSockets configuration
-├── routes/                 # Express router subfolders
-│   ├── auth.ts             # JWT-based admin and user KYC login
-│   ├── tracking.ts         # Coordinates archiving endpoint
-│   └── emergency.ts        # Emergency triggers (SMS & Webhook dispatcher)
-└── database/               # PostgreSQL client configs
+```bash
+# 1. Copy env file and fill in values
+cp .env.example .env
+
+# 2. Install dependencies
+npm install
+
+# 3. Create the database schema (with Docker running)
+docker exec -i traveltrek-db psql -U traveltrek_admin -d traveltrek < schema.sql
+
+# 4. Start the dev server
+npm run dev
 ```
 
-## 🛠️ API Routes
+## API Base
 
-### 1. Health Checks
-* `GET /api/health`: Services validation
+| Prefix             | Description              |
+|--------------------|--------------------------|
+| `GET /health`      | Health check             |
+| `POST /api/auth/*` | Authentication           |
+| `GET/POST /api/tourists/*` | Tourist CRUD    |
+| `POST /api/alerts/sos` | SOS trigger          |
+| `POST /api/tracking/batch` | GPS batch upload |
+| `GET/POST /api/geofence/zones` | Zone management |
+| `POST /api/blockchain/verify` | Identity verify |
+| `GET /api/dashboard/stats` | Dashboard stats  |
+| `POST /api/ai/risk-score` | AI risk scoring   |
 
-### 2. Emergency Triggers (HTTP Fallback)
-* `POST /api/emergency/sos`: Trigger a new emergency alert.
-  * Request Body:
-    ```json
-    {
-      "touristId": "IND-643269-HO5",
-      "touristName": "Arjun Kumar",
-      "latitude": 18.9696,
-      "longitude": 72.8193,
-      "type": "Panic Button Activated",
-      "description": "Tourist feels followed near platform 4."
-    }
-    ```
-* `GET /api/emergency/active`: List current unresolved alerts.
+## WebSocket Events
 
----
+Connect: `ws://localhost:3000`
 
-## 📡 WebSocket API Protocol
+| Event              | Direction | Description           |
+|--------------------|-----------|-----------------------|
+| `sos:new`          | Server→Client | New SOS alert     |
+| `sos:update`       | Server→Client | SOS status change |
+| `tourist:location` | Server→Client | Live GPS update   |
+| `zone:update`      | Server→Client | Geofence change   |
+| `alert:weather`    | Server→Client | Weather alert     |
 
-### 1. Client to Server Events
-* `tourist_location_update`: Emitted by the Flutter app to publish the user's latest latitude and longitude coordinate traces.
-  * Payloads: `{ touristId: string, latitude: double, longitude: double }`
-* `tourist_sos_trigger`: Emitted by the Flutter app when the Emergency SOS is activated.
-  * Payloads: `{ touristId: string, touristName: string, latitude: double, longitude: double, type: string }`
+Send `{ "action": "join", "room": "alerts" }` to subscribe to a room.
 
-### 2. Server to Client Events
-* `authority_location_broadcast`: Forwarded in real-time to active authority web maps.
-* `new_emergency_alert`: Forwarded to all active dashboards to display alert popups and trigger audio queues.
+## Architecture
 
----
-
-## 🚀 Local Run Guide
-
-1. Create a local environment variables file:
-   ```bash
-   cp .env.example .env
-   ```
-2. Install package requirements:
-   ```bash
-   npm install
-   ```
-3. Start the hot-reloading dev server:
-   ```bash
-   npm run dev
-   ```
-4. Build for deployment:
-   ```bash
-   npm run build
-   ```
+```
+src/
+├── index.js              Express server + WS init
+├── config/               env, db pool, firebase, constants
+├── middleware/           auth, authorityAuth, rateLimiter, validate, errorHandler
+├── routes/               8 route files (501 stubs ready for implementation)
+├── controllers/          one per route file
+├── services/             business logic (sosService, blockchainService, …)
+├── models/               raw SQL query functions (no ORM)
+├── websocket/            wsServer.js (rooms, heartbeat) + wsEvents.js
+└── utils/                hashUtils, geoUtils, responseUtils
+```
