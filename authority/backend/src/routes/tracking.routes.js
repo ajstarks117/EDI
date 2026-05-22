@@ -2,7 +2,7 @@
 // ─── Tracking Routes  /api/tracking/* ────────────────────────────────────────
 const router = require('express').Router();
 const { verifyToken }      = require('../middleware/auth');
-const { requireAuthority } = require('../middleware/authorityAuth');
+const { verifyAuthority } = require('../middleware/authorityAuth');
 const { trackingLimiter }  = require('../middleware/rateLimiter');
 const trackingController   = require('../controllers/trackingController');
 
