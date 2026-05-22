@@ -4,8 +4,9 @@ import { useTouristStore } from '../store/useTouristStore';
 import { useUIStore } from '../store/useUIStore';
 import { useGeofenceStore, type Geofence } from '../store/useGeofenceStore';
 import { useAlertStore } from '../store/useAlertStore';
-import { X, User, Activity, MapPin, Battery, PhoneCall, ShieldAlert, Trash2, Check, Radio, Clock, ShieldCheck, CheckCircle } from 'lucide-react';
+import { X, User, Activity, MapPin, Battery, PhoneCall, ShieldAlert, Trash2, Check, Radio, Clock, ShieldCheck, CheckCircle, MessageSquare, Map as MapIcon, QrCode, AlertTriangle, Lock } from 'lucide-react';
 import { intervalToDuration } from 'date-fns';
+import QRScannerModal from '../components/QRScannerModal';
 
 const IncidentTimer = ({ startTime }: { startTime: number }) => {
   const [now, setNow] = useState(Date.now());
@@ -67,6 +68,8 @@ export default function Map() {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingPolygon, setDrawingPolygon] = useState<google.maps.Polygon | null>(null);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false); // For medical data override
   
   const [zoneForm, setZoneForm] = useState({ name: '', type: 'warning' as Geofence['type'] });
 
@@ -272,47 +275,143 @@ export default function Map() {
                   <User className="h-5 w-5 text-indigo-400" />
                   <span>Tourist Profile</span>
                 </h3>
-                <button onClick={() => setRightPanelOpen(false)} className="p-1 rounded-md hover:bg-surface-border/50 text-muted-text hover:text-dark-text">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="p-5 space-y-5">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-text uppercase font-semibold">ID Number</p>
-                  <p className="font-mono font-medium flex items-center space-x-2">
-                    <span>{activeTourist.id}</span>
-                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                  </p>
+                <div className="flex space-x-2">
+                  {activeTourist.isIdentityVerified && (
+                    <span className="flex items-center space-x-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-xs font-semibold">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      <span>Verified</span>
+                    </span>
+                  )}
+                  <button onClick={() => setRightPanelOpen(false)} className="p-1 rounded-md hover:bg-surface-border/50 text-muted-text hover:text-dark-text">
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-text uppercase font-semibold flex items-center space-x-1">
-                      <Activity className="h-3.5 w-3.5" /><span>Status</span>
+              </div>
+              <div className="p-5 space-y-6">
+                
+                {/* Header Info */}
+                <div className="flex items-center space-x-4">
+                  <div className="h-16 w-16 rounded-full bg-surface-bg border-2 border-surface-border overflow-hidden shrink-0">
+                    {activeTourist.photo ? (
+                      <img src={activeTourist.photo} alt={activeTourist.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-full w-full p-3 text-slate-500" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg text-slate-100">{activeTourist.name || 'Unknown Tourist'}</h4>
+                    <p className="text-sm text-slate-400">{activeTourist.nationality || 'Nationality Unknown'}</p>
+                    <p className="text-xs text-indigo-300 font-mono mt-1">ID: {activeTourist.id}</p>
+                  </div>
+                </div>
+
+                {/* Identity Verification Action */}
+                {!activeTourist.isIdentityVerified && (
+                  <button 
+                    onClick={() => setIsQRScannerOpen(true)}
+                    className="w-full flex items-center justify-center space-x-2 py-2.5 bg-surface-bg hover:bg-surface-border border border-indigo-500/30 text-indigo-400 rounded-lg text-sm font-semibold transition"
+                  >
+                    <QrCode className="h-4 w-4" />
+                    <span>Scan QR Blockchain ID</span>
+                  </button>
+                )}
+
+                {/* Telemetry Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surface-bg p-3 rounded-lg border border-surface-border">
+                    <p className="text-[10px] text-muted-text uppercase font-semibold flex items-center space-x-1 mb-1">
+                      <Activity className="h-3 w-3" /><span>Status</span>
                     </p>
-                    <p className={`font-semibold capitalize text-${activeTourist.status === 'safe' ? 'emerald' : activeTourist.status === 'warning' ? 'amber' : activeTourist.status === 'critical' ? 'rose' : 'slate'}-400`}>
+                    <p className={`font-semibold text-sm capitalize text-${activeTourist.status === 'safe' ? 'emerald' : activeTourist.status === 'warning' ? 'amber' : activeTourist.status === 'critical' ? 'rose' : 'slate'}-400`}>
                       {activeTourist.status}
                     </p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-text uppercase font-semibold flex items-center space-x-1">
-                      <Battery className="h-3.5 w-3.5" /><span>Battery</span>
+                  <div className="bg-surface-bg p-3 rounded-lg border border-surface-border">
+                    <p className="text-[10px] text-muted-text uppercase font-semibold flex items-center space-x-1 mb-1">
+                      <Battery className="h-3 w-3" /><span>Battery</span>
                     </p>
-                    <p className="font-semibold text-emerald-400">84%</p>
+                    <p className="font-semibold text-sm text-emerald-400">84%</p>
+                  </div>
+                  <div className="col-span-2 bg-surface-bg p-3 rounded-lg border border-surface-border">
+                    <p className="text-[10px] text-muted-text uppercase font-semibold flex items-center space-x-1 mb-1">
+                      <MapPin className="h-3 w-3" /><span>Coordinates</span>
+                    </p>
+                    <p className="font-mono text-sm text-slate-300">{activeTourist.lat.toFixed(5)}, {activeTourist.lng.toFixed(5)}</p>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-text uppercase font-semibold flex items-center space-x-1">
-                    <MapPin className="h-3.5 w-3.5" /><span>Coordinates</span>
-                  </p>
-                  <div className="bg-surface-bg p-3 rounded-lg border border-surface-border text-sm font-mono text-slate-300">
-                    <p>Lat: {activeTourist.lat.toFixed(6)}</p>
-                    <p>Lng: {activeTourist.lng.toFixed(6)}</p>
+
+                {/* Detailed Info */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-muted-text uppercase font-semibold mb-1">Languages</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(activeTourist.languages || ['English']).map(lang => (
+                        <span key={lang} className="px-2 py-0.5 bg-surface-bg border border-surface-border rounded text-xs text-slate-300">{lang}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-text uppercase font-semibold mb-1">Emergency Contact</p>
+                    <p className="text-sm text-slate-200">{activeTourist.emergencyContact || 'Not provided'}</p>
                   </div>
                 </div>
+
+                {/* Gated Medical Data */}
+                <div className="border border-rose-500/20 rounded-lg overflow-hidden">
+                  <div className="bg-rose-500/10 p-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-rose-400">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="text-sm font-semibold uppercase tracking-wider">Medical File</span>
+                    </div>
+                    {(!isAdminUnlocked && activeTourist.status !== 'critical') && (
+                      <button 
+                        onClick={() => setIsAdminUnlocked(true)}
+                        className="flex items-center space-x-1 text-xs px-2 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded"
+                      >
+                        <Lock className="h-3 w-3" /><span>Override</span>
+                      </button>
+                    )}
+                  </div>
+                  {(activeTourist.status === 'critical' || isAdminUnlocked) ? (
+                    <div className="p-3 bg-rose-500/5 space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-[10px] text-rose-300/70 uppercase font-semibold">Blood Type</p>
+                          <p className="text-sm font-bold text-rose-400">{activeTourist.medicalInfo?.bloodType || 'Unknown'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-rose-300/70 uppercase font-semibold">Conditions</p>
+                          <p className="text-sm text-slate-200">{activeTourist.medicalInfo?.conditions.join(', ') || 'None'}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-rose-300/70 uppercase font-semibold">Allergies</p>
+                        <p className="text-sm text-slate-200">{activeTourist.medicalInfo?.allergies.join(', ') || 'None known'}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-surface-bg flex flex-col items-center justify-center text-center space-y-2">
+                      <Lock className="h-6 w-6 text-slate-500" />
+                      <p className="text-xs text-slate-400">Medical data is encrypted and restricted. Unlocks automatically during an SOS event.</p>
+                    </div>
+                  )}
+                </div>
+
               </div>
-              <div className="p-4 border-t border-surface-border bg-surface-bg/50">
-                <button className="w-full flex justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium transition">
-                  <PhoneCall className="h-4 w-4" /><span>Ping Device</span>
+              
+              {/* Quick Actions Footer */}
+              <div className="p-4 border-t border-surface-border bg-surface-bg/50 grid grid-cols-3 gap-2">
+                <button className="flex flex-col items-center justify-center py-2 bg-surface-card hover:bg-surface-border border border-surface-border rounded-lg transition text-slate-300">
+                  <PhoneCall className="h-4 w-4 mb-1 text-indigo-400" />
+                  <span className="text-[10px] font-semibold uppercase">Call</span>
+                </button>
+                <button className="flex flex-col items-center justify-center py-2 bg-surface-card hover:bg-surface-border border border-surface-border rounded-lg transition text-slate-300">
+                  <MessageSquare className="h-4 w-4 mb-1 text-emerald-400" />
+                  <span className="text-[10px] font-semibold uppercase">Message</span>
+                </button>
+                <button className="flex flex-col items-center justify-center py-2 bg-surface-card hover:bg-surface-border border border-surface-border rounded-lg transition text-slate-300">
+                  <MapIcon className="h-4 w-4 mb-1 text-amber-400" />
+                  <span className="text-[10px] font-semibold uppercase">Route</span>
                 </button>
               </div>
             </>
@@ -488,6 +587,14 @@ export default function Map() {
             </>
           )}
         </div>
+      )}
+
+      {/* QR Scanner Modal */}
+      {isQRScannerOpen && activeTourist && (
+        <QRScannerModal 
+          touristId={activeTourist.id}
+          onClose={() => setIsQRScannerOpen(false)}
+        />
       )}
     </div>
   );
