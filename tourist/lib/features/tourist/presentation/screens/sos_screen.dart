@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../../../../core/constants/ui_constants.dart';
+import '../../../safety/services/gps_service.dart';
 
 class SosScreen extends ConsumerStatefulWidget {
   const SosScreen({super.key});
@@ -12,6 +19,9 @@ class SosScreen extends ConsumerStatefulWidget {
 class _SosScreenState extends ConsumerState<SosScreen> with TickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
+
+  final GpsService _gpsService = GpsService();
+  String _locationText = 'Acquiring location...';
 
   final List<_LayerStatus> _layers = [
     const _LayerStatus(icon: Icons.wifi_rounded, label: 'Layer 1: Internet', status: _Status.loading),
@@ -31,37 +41,145 @@ class _SosScreenState extends ConsumerState<SosScreen> with TickerProviderStateM
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    _simulateLayerActivation();
+    _checkPermissionsAndStart();
   }
 
-  Future<void> _simulateLayerActivation() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() => _layers[0] = _layers[0].copyWith(status: _Status.success));
+  Future<void> _checkPermissionsAndStart() async {
+    final statuses = await [
+      Permission.location,
+      Permission.sms,
+      Permission.phone,
+    ].request();
 
+    if (statuses[Permission.location]!.isGranted) {
+      try {
+        final pos = await _gpsService.getCurrentPosition();
+        if (mounted) {
+          setState(() {
+            _locationText = '${pos.latitude.toStringAsFixed(4)}° N, ${pos.longitude.toStringAsFixed(4)}° E';
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _locationText = 'GPS Unavailable';
+          });
+        }
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _locationText = 'Permission Denied';
+        });
+      }
+    }
+    _executeLayerActivation();
+  }
+
+  Future<void> _executeLayerActivation() async {
+    // ---------- Layer 1: Internet ----------
+    if (!mounted) return;
+    setState(() => _layers[0] = _layers[0].copyWith(status: _Status.loading));
     await Future.delayed(const Duration(seconds: 1));
+
+    bool internetSuccess = false;
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (!connectivityResult.contains(ConnectivityResult.none)) {
+        // Fetch current coordinates if GPS permitted
+        final pos = await _gpsService.getCurrentPosition();
+        // Try posting to authority backend SOS endpoint
+        final response = await Dio().post(
+          'http://10.0.2.2:5000/api/emergency/sos',
+          data: {
+            'touristId': 'anonymous_tourist',
+            'latitude': pos.latitude,
+            'longitude': pos.longitude,
+            'type': 'CRITICAL EMERGENCY SOS',
+            'description': 'SOS triggered manually by user from Emergency Screen.',
+          },
+          options: Options(
+            connectTimeout: const Duration(seconds: 3),
+            receiveTimeout: const Duration(seconds: 3),
+          ),
+        );
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          internetSuccess = true;
+        }
+      }
+    } catch (_) {
+      // Offline fallback
+    }
+
+    if (mounted) {
+      setState(() {
+        _layers[0] = _layers[0].copyWith(
+          status: internetSuccess ? _Status.success : _Status.failed,
+        );
+      });
+    }
+
+    // ---------- Layer 2: SMS ----------
+    await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     setState(() => _layers[1] = _layers[1].copyWith(status: _Status.loading));
+    await Future.delayed(const Duration(seconds: 1));
 
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) return;
-    setState(() => _layers[1] = _layers[1].copyWith(status: _Status.success));
+    final smsPermission = await Permission.sms.status;
+    bool smsSuccess = smsPermission.isGranted;
 
+    if (mounted) {
+      setState(() {
+        _layers[1] = _layers[1].copyWith(
+          status: smsSuccess ? _Status.success : _Status.failed,
+        );
+      });
+    }
+
+    // ---------- Layer 3: Bluetooth ----------
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     setState(() => _layers[2] = _layers[2].copyWith(status: _Status.loading));
-
     await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _layers[2] = _layers[2].copyWith(status: _Status.success));
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    bool bluetoothSuccess = false;
+    try {
+      final isSupported = await FlutterBluePlus.isSupported;
+      if (isSupported) {
+        final state = await FlutterBluePlus.adapterState.first;
+        if (state == BluetoothAdapterState.on) {
+          bluetoothSuccess = true;
+        }
+      }
+    } catch (_) {
+      // Bluetooth access failed or not supported
+    }
+
+    if (mounted) {
+      setState(() {
+        _layers[2] = _layers[2].copyWith(
+          status: bluetoothSuccess ? _Status.success : _Status.failed,
+        );
+      });
+    }
+
+    // ---------- Layer 4: Audio Siren ----------
+    await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     setState(() => _layers[3] = _layers[3].copyWith(status: _Status.loading));
-
     await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _layers[3] = _layers[3].copyWith(status: _Status.success));
+
+    // Play intense vibrations to simulate localized audio/vibrational siren
+    for (int i = 0; i < 5; i++) {
+      HapticFeedback.vibrate();
+      await Future.delayed(const Duration(milliseconds: 150));
+    }
+
+    if (mounted) {
+      setState(() {
+        _layers[3] = _layers[3].copyWith(status: _Status.success);
+      });
+    }
   }
 
   @override
@@ -200,19 +318,11 @@ class _SosScreenState extends ConsumerState<SosScreen> with TickerProviderStateM
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'GPS Coordinates',
-                        style: AppTextStyles.caption.copyWith(color: Colors.white38, fontSize: 10),
-                      ),
+                      Text('Location Status', style: AppTextStyles.caption.copyWith(color: Colors.white54)),
                       const SizedBox(height: 2),
-                      const Text(
-                        '18.614646, 73.848604',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'monospace',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Text(
+                        _locationText,
+                        style: GoogleFonts.notoSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                     ],
                   ),
@@ -251,15 +361,16 @@ class _SosScreenState extends ConsumerState<SosScreen> with TickerProviderStateM
 
   String _getStatusText() {
     final successCount = _layers.where((l) => l.status == _Status.success).length;
+    final failedCount = _layers.where((l) => l.status == _Status.failed).length;
     if (successCount == _layers.length) return 'All channels active ✓';
-    if (successCount == 0) return 'Establishing connections...';
-    return 'Alert sent via $successCount channel${successCount > 1 ? 's' : ''} ✓';
+    if (successCount + failedCount == 0) return 'Establishing connections...';
+    return 'Active: $successCount, Failed: $failedCount';
   }
 }
 
 // ---------- Supporting ----------
 
-enum _Status { pending, loading, success }
+enum _Status { pending, loading, success, failed }
 
 class _LayerStatus {
   final IconData icon;
@@ -287,6 +398,11 @@ class _LayerTile extends StatelessWidget {
         tileColor = AppColors.safetyTeal.withValues(alpha: 0.1);
         borderColor = AppColors.safetyTeal.withValues(alpha: 0.4);
         trailing = const Icon(Icons.check_circle_rounded, color: AppColors.safetyTeal, size: 22);
+        break;
+      case _Status.failed:
+        tileColor = AppColors.alertRed.withValues(alpha: 0.1);
+        borderColor = AppColors.alertRed.withValues(alpha: 0.4);
+        trailing = const Icon(Icons.error_outline_rounded, color: AppColors.alertRed, size: 22);
         break;
       case _Status.loading:
         tileColor = AppColors.alertRed.withValues(alpha: 0.08);
@@ -318,7 +434,7 @@ class _LayerTile extends StatelessWidget {
             layer.icon,
             color: layer.status == _Status.success
                 ? AppColors.safetyTeal
-                : layer.status == _Status.loading
+                : (layer.status == _Status.failed || layer.status == _Status.loading)
                     ? AppColors.alertRed
                     : Colors.white24,
             size: 20,

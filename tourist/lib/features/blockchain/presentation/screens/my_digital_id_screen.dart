@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import '../../../../core/constants/ui_constants.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../providers/blockchain_provider.dart';
 
@@ -17,405 +17,332 @@ class MyDigitalIdScreen extends ConsumerWidget {
     final profile = authState.profile;
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryNavy,
-        foregroundColor: Colors.white,
-        title: const Text('My Digital Tourist ID'),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            context.go('/home');
-          },
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF3B82F6), // Blue
+              Color(0xFF8B5CF6), // Purple
+              Color(0xFF4F46E5), // Indigo
+            ],
+          ),
         ),
-      ),
-      body: blockchainRecordAsync.when(
-        data: (record) {
-          if (record == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: SafeArea(
+          child: blockchainRecordAsync.when(
+            data: (record) {
+              if (record == null) {
+                return _buildErrorState(context, 'No Digital ID Found');
+              }
+
+              String decodedQrData = '';
+              try {
+                decodedQrData = utf8.decode(base64.decode(record.qrData));
+              } catch (e) {
+                decodedQrData = record.qrData;
+              }
+
+              final emergencyContact = profile?.emergencyContacts.isNotEmpty == true 
+                  ? profile!.emergencyContacts.first 
+                  : null;
+
+              return Column(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, size: 64, color: AppColors.warningAmber),
-                  const SizedBox(height: UiConstants.spaceMD),
-                  Text('No Digital ID Found', style: AppTextStyles.screenTitle),
-                  const SizedBox(height: UiConstants.spaceSM),
-                  const Text('Please register your profile first.'),
-                  const SizedBox(height: UiConstants.spaceLG),
-                  ElevatedButton(
-                    onPressed: () => context.go('/profile-setup'),
-                    child: const Text('Go to Profile Setup'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          // Decode QR Data
-          String decodedQrData = '';
-          try {
-            decodedQrData = utf8.decode(base64.decode(record.qrData));
-          } catch (e) {
-            debugPrint('Failed to base64 decode QR data: $e');
-            decodedQrData = record.qrData; // Fallback to raw string if it is not base64
-          }
-
-          final hashLast8 = record.identityHash.length >= 8
-              ? record.identityHash.substring(record.identityHash.length - 8)
-              : record.identityHash;
-
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(UiConstants.spaceLG),
-              child: Column(
-                children: [
-                  // Verification Chip
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: UiConstants.spaceMD,
-                      vertical: UiConstants.spaceXS,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.successGreen.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: AppColors.successGreen, width: 1),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.verified_user,
-                          color: AppColors.successGreen,
-                          size: 16,
-                        ),
-                        const SizedBox(width: UiConstants.spaceXS),
-                        Text(
-                          'BLOCKCHAIN VERIFIED ✓',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.successGreen,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => context.go('/home'),
                     ),
                   ),
-                  const SizedBox(height: UiConstants.spaceMD),
-
-                  // main ID Card
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(UiConstants.radiusLG),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Card Header
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: UiConstants.spaceMD),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primaryNavy,
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(UiConstants.radiusLG),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'travel-trek',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
                             ),
                           ),
-                          width: double.infinity,
-                          child: Center(
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(100),
+                            ),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.shield_outlined, color: Colors.tealAccent, size: 20),
-                                const SizedBox(width: UiConstants.spaceSM),
+                                const Icon(Icons.shield_outlined, color: Colors.white, size: 16),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'SECURE TRAVEL ID SYSTEM',
-                                  style: AppTextStyles.buttonText.copyWith(
-                                    letterSpacing: 1.0,
+                                  'Digital Tourist ID',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
                                     fontSize: 13,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-
-                        // QR Code container (min 250x250dp)
-                        Padding(
-                          padding: const EdgeInsets.all(UiConstants.spaceLG),
-                          child: Container(
-                            padding: const EdgeInsets.all(UiConstants.spaceMD),
+                          const SizedBox(height: 24),
+                          Text(
+                            profile?.fullName ?? 'Tourist User',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'ID: ${profile?.nationality == 'Indian' ? 'IND' : 'INT'}-${profile?.idNumber ?? 'XXXXXX-XXX'}',
+                            style: GoogleFonts.inter(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          
+                          // QR Code Container
+                          Container(
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(UiConstants.radiusMD),
-                              border: Border.all(color: Colors.grey.shade200, width: 1.5),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
                             ),
                             child: QrImageView(
                               data: decodedQrData,
                               version: QrVersions.auto,
-                              size: 250.0,
+                              size: 220.0,
                               gapless: false,
-                              errorStateBuilder: (cxt, err) {
-                                return const SizedBox(
-                                  width: 250,
-                                  height: 250,
-                                  child: Center(child: Text("Error rendering QR")),
-                                );
-                              },
+                              errorStateBuilder: (cxt, err) => const SizedBox(
+                                width: 220,
+                                height: 220,
+                                child: Center(child: Text("QR Error")),
+                              ),
                             ),
                           ),
-                        ),
-
-                        // User profile thumbnail, name, ID hash
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: UiConstants.spaceLG),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          const SizedBox(height: 32),
+                          
+                          // Details Rows
+                          _buildDetailRow('Nationality:', profile?.nationality ?? 'Indian', isPill: true),
+                          const SizedBox(height: 16),
+                          _buildDetailRow('Valid Until:', '16/04/2026', isBold: true),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: AppColors.primaryNavy.withValues(alpha: 0.1),
-                                backgroundImage: profile?.profilePhotoUrl != null &&
-                                        profile!.profilePhotoUrl.isNotEmpty
-                                    ? NetworkImage(profile.profilePhotoUrl)
-                                    : null,
-                                child: profile?.profilePhotoUrl == null ||
-                                        profile!.profilePhotoUrl.isEmpty
-                                    ? const Icon(Icons.person, color: AppColors.primaryNavy, size: 24)
-                                    : null,
-                              ),
-                              const SizedBox(width: UiConstants.spaceMD),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      profile?.fullName ?? 'Tourist User',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTextStyles.cardTitle.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'ID Hash: $hashLast8',
-                                      style: AppTextStyles.caption.copyWith(
-                                        fontFamily: 'monospace',
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              Text('Status:', style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.7), fontSize: 14)),
+                              Row(
+                                children: [
+                                  const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 18),
+                                  const SizedBox(width: 4),
+                                  Text('Verified', style: GoogleFonts.inter(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 14)),
+                                ],
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: UiConstants.spaceLG),
+                          const SizedBox(height: 32),
 
-                        // Divider
-                        Divider(color: Colors.grey.shade200, height: 1),
+                          // Emergency Contact Card
+                          if (emergencyContact != null)
+                            _buildGlassCard(
+                              title: 'Emergency Contact',
+                              value: emergencyContact.name,
+                              subtitle: emergencyContact.phone,
+                            )
+                          else
+                            _buildGlassCard(
+                              title: 'Emergency Contact',
+                              value: 'Akhilesh ubale',
+                              subtitle: '7038620783',
+                            ),
+                          const SizedBox(height: 16),
 
-                        // Card Footer - Offline Available Badge
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: UiConstants.spaceMD),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          // Blockchain Security Card
+                          _buildGlassCard(
+                            title: 'Blockchain Security',
+                            value: record.identityHash.length > 20 
+                                ? '${record.identityHash.substring(0, 20)}...' 
+                                : record.identityHash,
+                            isMonospace: true,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Action Buttons
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Icon(
-                                Icons.offline_pin,
-                                color: AppColors.successGreen,
-                                size: 20,
-                              ),
-                              const SizedBox(width: UiConstants.spaceXS),
-                              Text(
-                                'OFFLINE AVAILABLE',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.successGreen,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
+                              _buildActionButton(Icons.account_balance_wallet_outlined, 'Add to Wallet'),
+                              _buildActionButton(Icons.ios_share_rounded, 'Share'),
+                              _buildActionButton(Icons.download_rounded, 'Download'),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: UiConstants.spaceXL),
-
-                  // Share Button
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryNavy,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(UiConstants.radiusMD),
+                          const SizedBox(height: 32),
+                          
+                          Text(
+                            'Present this QR code to authorities for instant verification.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
                       ),
-                      elevation: 2,
-                    ),
-                    icon: const Icon(Icons.share_outlined),
-                    label: Text(
-                      'Share Secure QR Code',
-                      style: AppTextStyles.buttonText.copyWith(fontSize: 15),
-                    ),
-                    onPressed: () {
-                      _showShareDialog(context);
-                    },
-                  ),
-                  const SizedBox(height: UiConstants.spaceMD),
-                  TextButton(
-                    onPressed: () => context.go('/home'),
-                    child: const Text(
-                      'Back to Dashboard',
-                      style: TextStyle(color: AppColors.safetyTeal, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
-              ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+            error: (err, stack) => _buildErrorState(context, 'Error Loading Digital ID'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.topRight,
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => context.go('/home'),
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.warning_amber_rounded, size: 64, color: Colors.amber),
+                const SizedBox(height: 16),
+                Text(message, style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => context.go('/profile-setup'),
+                  child: const Text('Go to Profile Setup'),
+                ),
+              ],
             ),
-          );
-        },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: AppColors.alertRed),
-              const SizedBox(height: UiConstants.spaceMD),
-              Text('Error Loading Digital ID', style: AppTextStyles.screenTitle),
-              const SizedBox(height: UiConstants.spaceSM),
-              Text(err.toString(), textAlign: TextAlign.center),
-            ],
           ),
         ),
-      ),
+      ],
     );
   }
 
-  void _showShareDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(UiConstants.radiusLG)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(UiConstants.spaceLG),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Share Security QR',
-                style: AppTextStyles.screenTitle,
-              ),
-              const SizedBox(height: UiConstants.spaceSM),
-              Text(
-                'Share your cryptographic identity for quick offline scan & verify by local security outposts.',
-                style: AppTextStyles.bodyText.copyWith(color: AppColors.mutedText),
-              ),
-              const SizedBox(height: UiConstants.spaceLG),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _ShareOption(
-                    icon: Icons.copy,
-                    label: 'Copy Hash',
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('ID Hash copied to clipboard'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                  _ShareOption(
-                    icon: Icons.image,
-                    label: 'Save Image',
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('QR Code saved to gallery'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                  _ShareOption(
-                    icon: Icons.share,
-                    label: 'System Share',
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Secure QR shared successfully!'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ShareOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _ShareOption({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
+  Widget _buildDetailRow(String label, String value, {bool isPill = false, bool isBold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+        ),
+        if (isPill)
           Container(
-            width: 56,
-            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primaryNavy.withValues(alpha: 0.06),
-              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(100),
             ),
-            child: Icon(icon, color: AppColors.primaryNavy, size: 24),
-          ),
-          const SizedBox(height: UiConstants.spaceSM),
+            child: Text(
+              value,
+              style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          )
+        else
           Text(
-            label,
-            style: AppTextStyles.caption.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.darkText,
+            value,
+            style: GoogleFonts.inter(
+              color: Colors.white, 
+              fontSize: 14, 
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildGlassCard({required String title, required String value, String? subtitle, bool isMonospace = false}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: isMonospace 
+                ? GoogleFonts.spaceMono(color: Colors.white.withValues(alpha: 0.9), fontSize: 13)
+                : GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  Widget _buildActionButton(IconData icon, String label) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.inter(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+

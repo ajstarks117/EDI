@@ -1,8 +1,8 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import '../../../../core/constants/ui_constants.dart';
 import '../providers/map_provider.dart';
 import '../providers/settings_provider.dart';
@@ -50,8 +50,45 @@ class MapScreen extends ConsumerWidget {
               ? const Center(child: CircularProgressIndicator())
               : Stack(
                   children: [
-                    // Map canvas (mock interactive)
-                    _MockMapCanvas(mapState: mapState),
+                    // Actual Map implementation using Mapbox
+                    Positioned.fill(
+                      child: _MapboxCanvas(mapState: mapState),
+                    ),
+
+                    // Geofencing warnings/alerts overlay
+                    if (mapState.triggeredDangerZone != null)
+                      Positioned(
+                        top: 76,
+                        left: 16,
+                        right: 16,
+                        child: _GeofenceAlertCard(
+                          zone: mapState.triggeredDangerZone!,
+                          backgroundColor: AppColors.alertRed,
+                          icon: Icons.gpp_bad_rounded,
+                        ),
+                      )
+                    else if (mapState.triggeredWeatherZone != null)
+                      Positioned(
+                        top: 76,
+                        left: 16,
+                        right: 16,
+                        child: _GeofenceAlertCard(
+                          zone: mapState.triggeredWeatherZone!,
+                          backgroundColor: AppColors.warningAmber,
+                          icon: Icons.thunderstorm_rounded,
+                        ),
+                      )
+                    else if (mapState.triggeredSafeZone != null)
+                      Positioned(
+                        top: 76,
+                        left: 16,
+                        right: 16,
+                        child: _GeofenceAlertCard(
+                          zone: mapState.triggeredSafeZone!,
+                          backgroundColor: AppColors.safetyTeal,
+                          icon: Icons.gpp_good_rounded,
+                        ),
+                      ),
 
                     // Zoom controls
                     Positioned(
@@ -192,159 +229,146 @@ class MapScreen extends ConsumerWidget {
   }
 }
 
-// ---------- Mock Map Canvas ----------
+// ---------- Mapbox Canvas ----------
 
-class _MockMapCanvas extends StatelessWidget {
+class _MapboxCanvas extends StatefulWidget {
   final MapState mapState;
-  const _MockMapCanvas({required this.mapState});
+  const _MapboxCanvas({required this.mapState});
+
+  @override
+  State<_MapboxCanvas> createState() => _MapboxCanvasState();
+}
+
+class _MapboxCanvasState extends State<_MapboxCanvas> {
+  MapboxMap? mapboxMap;
+  CircleAnnotationManager? circleAnnotationManager;
+  bool _cameraCentered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    MapboxOptions.setAccessToken("YOUR_MAPBOX_TOKEN");
+  }
+
+  void _onMapCreated(MapboxMap mapboxMap) async {
+    this.mapboxMap = mapboxMap;
+    
+    // Set default camera centering near Pune Shaniwar Wada
+    final initialLng = widget.mapState.currentPosition?.longitude ?? 73.8553;
+    final initialLat = widget.mapState.currentPosition?.latitude ?? 18.5195;
+    
+    mapboxMap.setCamera(CameraOptions(
+      center: Point(coordinates: Position(initialLng, initialLat)),
+      zoom: widget.mapState.zoomLevel,
+    ));
+
+    circleAnnotationManager = await mapboxMap.annotations.createCircleAnnotationManager();
+    _drawAnnotations();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MapboxCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mapState != widget.mapState) {
+      _drawAnnotations();
+      
+      // Auto-center camera once when GPS coordinates are first resolved
+      if (widget.mapState.currentPosition != null && !_cameraCentered && mapboxMap != null) {
+        _cameraCentered = true;
+        mapboxMap!.setCamera(CameraOptions(
+          center: Point(
+            coordinates: Position(
+              widget.mapState.currentPosition!.longitude,
+              widget.mapState.currentPosition!.latitude,
+            ),
+          ),
+          zoom: 15.0,
+        ));
+      }
+    }
+  }
+
+  Future<void> _drawAnnotations() async {
+    final manager = circleAnnotationManager;
+    if (manager == null) return;
+
+    await manager.deleteAll();
+
+    // 1. Draw User's Current Location if available
+    final userPos = widget.mapState.currentPosition;
+    if (userPos != null) {
+      // Draw outer pulse indicator
+      await manager.create(
+        CircleAnnotationOptions(
+          geometry: Point(coordinates: Position(userPos.longitude, userPos.latitude)),
+          circleRadius: 12.0,
+          circleColor: const Color(0xFF4285F4).toARGB32(),
+          circleOpacity: 0.25,
+        ),
+      );
+
+      // Draw inner user dot
+      await manager.create(
+        CircleAnnotationOptions(
+          geometry: Point(coordinates: Position(userPos.longitude, userPos.latitude)),
+          circleRadius: 6.0,
+          circleColor: const Color(0xFF4285F4).toARGB32(),
+          circleStrokeColor: Colors.white.toARGB32(),
+          circleStrokeWidth: 2.0,
+        ),
+      );
+    }
+
+    // 2. Draw Geofence Zones
+    for (final zone in widget.mapState.geofenceZones) {
+      if (zone.type == GeofenceType.danger && !widget.mapState.showDangerZones) continue;
+      if (zone.type == GeofenceType.safe && !widget.mapState.showSafeZones) continue;
+
+      int colorVal = Colors.grey.toARGB32();
+      double sizeRadius = 25.0;
+
+      if (zone.type == GeofenceType.danger) {
+        colorVal = AppColors.alertRed.toARGB32();
+        sizeRadius = 35.0;
+      } else if (zone.type == GeofenceType.safe) {
+        colorVal = AppColors.safetyTeal.toARGB32();
+        sizeRadius = 25.0;
+      } else if (zone.type == GeofenceType.weatherAlert) {
+        colorVal = AppColors.warningAmber.toARGB32();
+        sizeRadius = 45.0;
+      }
+
+      // Draw semi-transparent fence boundary
+      await manager.create(
+        CircleAnnotationOptions(
+          geometry: Point(coordinates: Position(zone.longitude, zone.latitude)),
+          circleRadius: sizeRadius,
+          circleColor: colorVal,
+          circleOpacity: 0.28,
+          circleStrokeColor: colorVal,
+          circleStrokeWidth: 1.5,
+        ),
+      );
+
+      // Draw solid center focal point
+      await manager.create(
+        CircleAnnotationOptions(
+          geometry: Point(coordinates: Position(zone.longitude, zone.latitude)),
+          circleRadius: 4.5,
+          circleColor: colorVal,
+          circleOpacity: 0.95,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFE8F0F8),
-      child: CustomPaint(
-        painter: _MapPainter(mapState: mapState),
-        size: Size.infinite,
-      ),
+    return MapWidget(
+      onMapCreated: _onMapCreated,
+      styleUri: MapboxStyles.MAPBOX_STREETS,
     );
   }
-}
-
-class _MapPainter extends CustomPainter {
-  final MapState mapState;
-  _MapPainter({required this.mapState});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centerX = size.width / 2;
-    final centerY = size.height / 2;
-    final scale = mapState.zoomLevel / 14.0;
-
-    // Grid lines
-    final gridPaint = Paint()
-      ..color = const Color(0xFFD0DDE8)
-      ..strokeWidth = 0.5;
-    for (double x = 0; x < size.width; x += 40 * scale) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (double y = 0; y < size.height; y += 40 * scale) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    // Roads
-    final roadPaint = Paint()
-      ..color = const Color(0xFFFFFFFF)
-      ..strokeWidth = 8 * scale
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(0, centerY), Offset(size.width, centerY), roadPaint);
-    canvas.drawLine(Offset(centerX, 0), Offset(centerX, size.height), roadPaint);
-    canvas.drawLine(Offset(centerX - 150, 0), Offset(centerX + 150, size.height), roadPaint);
-
-    // Danger zones
-    if (mapState.showDangerZones) {
-      final dangerPaint = Paint()
-        ..color = AppColors.alertRed.withValues(alpha: 0.15)
-        ..style = PaintingStyle.fill;
-      final dangerBorderPaint = Paint()
-        ..color = AppColors.alertRed.withValues(alpha: 0.6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-
-      canvas.drawCircle(Offset(centerX + 100, centerY - 80), 55 * scale, dangerPaint);
-      canvas.drawCircle(Offset(centerX + 100, centerY - 80), 55 * scale, dangerBorderPaint);
-
-      canvas.drawCircle(Offset(centerX - 120, centerY + 130), 40 * scale, dangerPaint);
-      canvas.drawCircle(Offset(centerX - 120, centerY + 130), 40 * scale, dangerBorderPaint);
-    }
-
-    // Safe zones
-    if (mapState.showSafeZones) {
-      final safePaint = Paint()
-        ..color = AppColors.safetyTeal.withValues(alpha: 0.12)
-        ..style = PaintingStyle.fill;
-      final safeBorderPaint = Paint()
-        ..color = AppColors.safetyTeal.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-
-      canvas.drawCircle(Offset(centerX - 80, centerY - 60), 65 * scale, safePaint);
-      canvas.drawCircle(Offset(centerX - 80, centerY - 60), 65 * scale, safeBorderPaint);
-
-      canvas.drawCircle(Offset(centerX + 60, centerY + 100), 50 * scale, safePaint);
-      canvas.drawCircle(Offset(centerX + 60, centerY + 100), 50 * scale, safeBorderPaint);
-    }
-
-    // Network strength
-    if (mapState.showNetworkStrength) {
-      final towerPaint = Paint()
-        ..color = AppColors.successGreen.withValues(alpha: 0.08)
-        ..style = PaintingStyle.fill;
-      final towerBorder = Paint()
-        ..color = AppColors.successGreen.withValues(alpha: 0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1;
-
-      canvas.drawCircle(Offset(centerX, centerY - 120), 80 * scale, towerPaint);
-      canvas.drawCircle(Offset(centerX, centerY - 120), 80 * scale, towerBorder);
-      canvas.drawCircle(Offset(centerX + 130, centerY + 50), 70 * scale, towerPaint);
-      canvas.drawCircle(Offset(centerX + 130, centerY + 50), 70 * scale, towerBorder);
-    }
-
-    // User location beacon
-    final userOuterPaint = Paint()
-      ..color = const Color(0xFF4285F4).withValues(alpha: 0.15);
-    final userInnerPaint = Paint()..color = const Color(0xFF4285F4);
-    final userBorder = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-
-    canvas.drawCircle(Offset(centerX, centerY), 30 * scale, userOuterPaint);
-    canvas.drawCircle(Offset(centerX, centerY), 8, userInnerPaint);
-    canvas.drawCircle(Offset(centerX, centerY), 8, userBorder);
-
-    // Other tourists
-    if (mapState.showOtherTourists) {
-      final rng = Random(42);
-      final touristPaint = Paint()..color = AppColors.primaryNavy;
-      for (int i = 0; i < 5; i++) {
-        final tx = centerX + (rng.nextDouble() - 0.5) * 250;
-        final ty = centerY + (rng.nextDouble() - 0.5) * 300;
-        canvas.drawCircle(Offset(tx, ty), 5, touristPaint);
-        final outerPaint = Paint()
-          ..color = AppColors.primaryNavy.withValues(alpha: 0.15);
-        canvas.drawCircle(Offset(tx, ty), 12, outerPaint);
-      }
-    }
-
-    // Weather alert marker
-    _drawWeatherMarker(canvas, Offset(centerX + 140, centerY - 140), scale);
-  }
-
-  void _drawWeatherMarker(Canvas canvas, Offset pos, double scale) {
-    final bgPaint = Paint()..color = AppColors.warningAmber.withValues(alpha: 0.2);
-    final borderPaint = Paint()
-      ..color = AppColors.warningAmber
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawCircle(pos, 18 * scale, bgPaint);
-    canvas.drawCircle(pos, 18 * scale, borderPaint);
-
-    // ⚡ lightning bolt (simplified triangle)
-    final bolt = Paint()..color = AppColors.warningAmber;
-    final path = Path()
-      ..moveTo(pos.dx - 4, pos.dy - 8)
-      ..lineTo(pos.dx + 2, pos.dy - 1)
-      ..lineTo(pos.dx - 1, pos.dy - 1)
-      ..lineTo(pos.dx + 4, pos.dy + 8)
-      ..lineTo(pos.dx - 2, pos.dy + 1)
-      ..lineTo(pos.dx + 1, pos.dy + 1)
-      ..close();
-    canvas.drawPath(path, bolt);
-  }
-
-  @override
-  bool shouldRepaint(covariant _MapPainter old) => old.mapState != mapState;
 }
 
 // ---------- Supporting Widgets ----------
@@ -377,9 +401,16 @@ class _MapControlButton extends StatelessWidget {
   }
 }
 
-class _MapLegend extends StatelessWidget {
+class _MapLegend extends StatefulWidget {
   final MapState mapState;
   const _MapLegend({required this.mapState});
+
+  @override
+  State<_MapLegend> createState() => _MapLegendState();
+}
+
+class _MapLegendState extends State<_MapLegend> {
+  bool _isExpanded = true;
 
   @override
   Widget build(BuildContext context) {
@@ -399,16 +430,28 @@ class _MapLegend extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Map Legend', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          const _LegendItem(color: Color(0xFF4285F4), label: 'Your location'),
-          if (mapState.showDangerZones)
-            const _LegendItem(color: AppColors.alertRed, label: 'Danger zone'),
-          if (mapState.showSafeZones)
-            const _LegendItem(color: AppColors.safetyTeal, label: 'Safe zone'),
-          if (mapState.showNetworkStrength)
-            const _LegendItem(color: AppColors.successGreen, label: 'Network coverage'),
-          const _LegendItem(color: AppColors.warningAmber, label: 'Weather alert'),
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Map Legend', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 4),
+                Icon(_isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up, size: 16),
+              ],
+            ),
+          ),
+          if (_isExpanded) ...[
+            const SizedBox(height: 6),
+            const _LegendItem(color: Color(0xFF4285F4), label: 'Your location'),
+            if (widget.mapState.showDangerZones)
+              const _LegendItem(color: AppColors.alertRed, label: 'Danger zone'),
+            if (widget.mapState.showSafeZones)
+              const _LegendItem(color: AppColors.safetyTeal, label: 'Safe zone'),
+            if (widget.mapState.showNetworkStrength)
+              const _LegendItem(color: AppColors.successGreen, label: 'Network coverage'),
+            const _LegendItem(color: AppColors.warningAmber, label: 'Weather alert'),
+          ]
         ],
       ),
     );
@@ -647,6 +690,119 @@ class _GpsDeniedView extends StatelessWidget {
                 foregroundColor: Colors.white,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------- Geofence Warning/Alert Card ----------
+
+class _GeofenceAlertCard extends StatefulWidget {
+  final GeofenceZone zone;
+  final Color backgroundColor;
+  final IconData icon;
+
+  const _GeofenceAlertCard({
+    required this.zone,
+    required this.backgroundColor,
+    required this.icon,
+  });
+
+  @override
+  State<_GeofenceAlertCard> createState() => _GeofenceAlertCardState();
+}
+
+class _GeofenceAlertCardState extends State<_GeofenceAlertCard> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _glowAnimation = Tween<double>(begin: 0.2, end: 0.8).animate(_animationController);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDanger = widget.zone.type == GeofenceType.danger;
+
+    return AnimatedBuilder(
+      animation: _glowAnimation,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.backgroundColor.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: widget.backgroundColor.withValues(alpha: _glowAnimation.value),
+                blurRadius: 12,
+                spreadRadius: 1.5,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(widget.icon, color: Colors.white, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isDanger ? 'DANGER ZONE ENCOUNTERED' : 'AREA NOTICE',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 11,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.zone.label,
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (isDanger) ...[
+              ElevatedButton(
+                onPressed: () => context.push('/sos'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.alertRed,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                ),
+                child: const Text('SOS'),
+              ),
+            ]
           ],
         ),
       ),

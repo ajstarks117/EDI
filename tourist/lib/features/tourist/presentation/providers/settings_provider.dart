@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/hive_service.dart';
+import '../../../safety/services/background_tracking.dart';
 
 class SettingsState {
   final String language;
@@ -90,6 +91,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> _persist() async {
     final box = HiveService.settingsBox;
     await box.put('prefs', jsonEncode(state.toJson()));
+    await box.put('backtrackingEnabled', state.backtrackingEnabled);
   }
 
   Future<void> setLanguage(String lang) async {
@@ -125,6 +127,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> toggleBacktracking(bool val) async {
     state = state.copyWith(backtrackingEnabled: val);
     await _persist();
+    if (val) {
+      await BackgroundTrackingService.startTracking();
+    } else {
+      await BackgroundTrackingService.stopTracking();
+    }
   }
 
   Future<void> toggleShareLocation(bool val) async {

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/ui_constants.dart';
+import '../../../../shared/widgets/sos_fab.dart';
 
 class DashboardShellScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -43,6 +44,8 @@ class DashboardShellScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
+      floatingActionButton: const SosFab(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: _GlassBottomNavBar(
         currentIndex: navigationShell.currentIndex,
         onTap: (index) => navigationShell.goBranch(
@@ -51,82 +54,10 @@ class DashboardShellScreen extends StatelessWidget {
         ),
         tabs: _tabs,
       ),
-      floatingActionButton: _SosFloatingButton(
-        onPressed: () => context.push('/sos'),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
 
-class _SosFloatingButton extends StatefulWidget {
-  final VoidCallback onPressed;
-  const _SosFloatingButton({required this.onPressed});
-
-  @override
-  State<_SosFloatingButton> createState() => _SosFloatingButtonState();
-}
-
-class _SosFloatingButtonState extends State<_SosFloatingButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulseController;
-  late final Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _pulseAnimation.value,
-          child: child,
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.alertRed.withValues(alpha: 0.4),
-              blurRadius: 16,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: widget.onPressed,
-          backgroundColor: AppColors.alertRed,
-          elevation: 0,
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.sos_rounded, color: Colors.white, size: 24),
-              Text('SOS', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _GlassBottomNavBar extends StatelessWidget {
   final int currentIndex;

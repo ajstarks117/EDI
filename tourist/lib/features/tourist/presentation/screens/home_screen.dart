@@ -199,59 +199,70 @@ class HomeScreen extends ConsumerWidget {
                 const _SectionHeader(title: 'Personal Safety Tips'),
                 const SizedBox(height: 10),
                 const _SafetyTipsCarousel(),
+                
+                const SizedBox(height: 32),
+                
+                // 9. Emergency & Digital ID Buttons (Moved from sticky bottom)
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push('/sos'),
+                        icon: const Icon(Icons.sos_rounded, color: Colors.white, size: 22),
+                        label: Text('EMERGENCY SOS', style: AppTextStyles.buttonText.copyWith(fontSize: 13, letterSpacing: 0.5)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.alertRed,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(UiConstants.radiusMD),
+                          ),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push('/digital-id'),
+                        icon: const Icon(Icons.qr_code_rounded, color: Colors.white, size: 20),
+                        label: Text('SHOW DIGITAL ID', style: AppTextStyles.buttonText.copyWith(fontSize: 13, letterSpacing: 0.5)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryNavy,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(UiConstants.radiusMD),
+                          ),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // 10. AI Safety Assistant Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/ai-assistant'),
+                    icon: const Icon(Icons.smart_toy_rounded, size: 20),
+                    label: Text('AI Safety Assistant (Offline)', style: AppTextStyles.buttonText.copyWith(fontSize: 13, color: AppColors.primaryNavy)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primaryNavy,
+                      side: const BorderSide(color: AppColors.primaryNavy, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(UiConstants.radiusMD),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ]),
             ),
           ),
         ],
-      ),
-      // Sticky bottom emergency buttons row
-      bottomSheet: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => context.push('/sos'),
-                icon: const Icon(Icons.sos_rounded, color: Colors.white, size: 22),
-                label: Text('EMERGENCY SOS', style: AppTextStyles.buttonText.copyWith(fontSize: 13, letterSpacing: 0.5)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.alertRed,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(UiConstants.radiusMD),
-                  ),
-                  elevation: 2,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => context.push('/digital-id'),
-                icon: const Icon(Icons.qr_code_rounded, color: Colors.white, size: 20),
-                label: Text('SHOW DIGITAL ID', style: AppTextStyles.buttonText.copyWith(fontSize: 13, letterSpacing: 0.5)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryNavy,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(UiConstants.radiusMD),
-                  ),
-                  elevation: 2,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -471,16 +482,19 @@ class _UserProfileHeaderCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.successGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(100),
-                        border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.3), width: 1),
-                      ),
-                      child: Text(
-                        'Verified Explorer • $nationality',
-                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.successGreen),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.successGreen.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.3), width: 1),
+                        ),
+                        child: Text(
+                          'Verified Explorer • $nationality',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.successGreen),
+                        ),
                       ),
                     ),
                   ],

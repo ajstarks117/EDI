@@ -27,6 +27,18 @@ final blockchainIdProvider = FutureProvider<BlockchainRecord?>((ref) async {
     ref.read(blockchainStatusProvider.notifier).state = BlockchainStatus.verified;
     return cached;
   }
+
+  // Auto-generate if missing
+  final authState = ref.read(authNotifierProvider);
+  if (authState.profile != null) {
+    try {
+      final notifier = ref.read(blockchainNotifierProvider);
+      return await notifier.generateId();
+    } catch (e) {
+      return null;
+    }
+  }
+
   return null;
 });
 

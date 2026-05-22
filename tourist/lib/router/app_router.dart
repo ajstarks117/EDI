@@ -16,6 +16,7 @@ import '../features/tourist/presentation/screens/itinerary_screen.dart';
 import '../features/tourist/presentation/screens/settings_screen.dart';
 import '../features/tourist/presentation/screens/sos_screen.dart';
 import '../features/tourist/presentation/screens/ai_safety_assistant_screen.dart';
+import '../features/sos/presentation/screens/sos_active_screen.dart';
 
 // Navigator keys for each shell branch
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -112,6 +113,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         path: '/sos',
         builder: (context, state) => const SosScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: '/sos-active',
+        builder: (context, state) => const SosActiveScreen(),
       ),
 
       // Main dashboard shell with bottom navigation

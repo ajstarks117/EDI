@@ -5,13 +5,25 @@ import 'router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/hive_service.dart';
 import 'core/constants/ui_constants.dart';
+import 'features/safety/services/background_tracking.dart';
 
 // Async initialization provider
 final appInitializationProvider = FutureProvider<void>((ref) async {
   // 1. Initialize Hive (critical for local config/caching)
   await HiveService.init();
 
-  // 2. Initialize Firebase (non-critical fallback for offline/development testing)
+  // 2. Initialize Background Tracking Service
+  try {
+    await BackgroundTrackingService.initialize();
+    final isBacktrackingEnabled = HiveService.settingsBox.get('backtrackingEnabled', defaultValue: true);
+    if (isBacktrackingEnabled) {
+      await BackgroundTrackingService.startTracking();
+    }
+  } catch (e) {
+    debugPrint('Background tracking service failed to start: $e');
+  }
+
+  // 3. Initialize Firebase (non-critical fallback for offline/development testing)
   try {
     await Firebase.initializeApp();
   } catch (e) {
