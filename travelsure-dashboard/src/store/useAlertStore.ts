@@ -11,6 +11,7 @@ export interface Alert {
 interface AlertState {
   alertFeed: Alert[];
   addAlert: (alert: Omit<Alert, 'id' | 'timestamp'>) => void;
+  updateAlert: (id: string, alert: Partial<Omit<Alert, 'id' | 'timestamp'>>) => void;
   removeAlert: (id: string) => void;
   clearAlerts: () => void;
 }
@@ -23,6 +24,9 @@ export const useAlertStore = create<AlertState>((set) => ({
       id: crypto.randomUUID(),
       timestamp: Date.now()
     }, ...state.alertFeed]
+  })),
+  updateAlert: (id, updatedAlert) => set((state) => ({
+    alertFeed: state.alertFeed.map((a) => a.id === id ? { ...a, ...updatedAlert } : a)
   })),
   removeAlert: (id) => set((state) => ({
     alertFeed: state.alertFeed.filter((a) => a.id !== id)

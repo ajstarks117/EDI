@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import { Bell, Shield, Calendar, Clock, Sun, Moon, Wifi } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUIStore } from '../store/useUIStore';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,12 +11,42 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [time, setTime] = useState(new Date());
-  const { darkMode, toggleDarkMode } = useUIStore();
+  const { darkMode, toggleDarkMode, connectionStatus } = useUIStore();
+
+  // Initialize global websocket connection
+  useWebSocket();
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const getStatusColor = () => {
+    switch (connectionStatus) {
+      case 'connected': return 'text-emerald-400';
+      case 'connecting': return 'text-amber-400';
+      case 'disconnected': return 'text-rose-400';
+      default: return 'text-slate-400';
+    }
+  };
+
+  const getStatusBg = () => {
+    switch (connectionStatus) {
+      case 'connected': return 'bg-emerald-500';
+      case 'connecting': return 'bg-amber-500';
+      case 'disconnected': return 'bg-rose-500';
+      default: return 'bg-slate-500';
+    }
+  };
+
+  const getStatusBgPing = () => {
+    switch (connectionStatus) {
+      case 'connected': return 'bg-emerald-400';
+      case 'connecting': return 'bg-amber-400';
+      case 'disconnected': return 'bg-rose-400';
+      default: return 'bg-slate-400';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-surface text-dark-text flex transition-colors duration-300">
@@ -35,11 +66,11 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Connectivity Indicator */}
             <div id="connectivity-indicator" className="flex items-center space-x-2 bg-surface-card/60 border border-surface-border/30 px-3 py-1.5 rounded-md">
-              <Wifi className="h-4 w-4 text-emerald-400" />
-              <span className="text-xs font-semibold text-emerald-400">Connected</span>
+              <Wifi className={`h-4 w-4 ${getStatusColor()}`} />
+              <span className={`text-xs font-semibold capitalize ${getStatusColor()}`}>{connectionStatus}</span>
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${getStatusBgPing()}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${getStatusBg()}`}></span>
               </span>
             </div>
 
