@@ -86,7 +86,7 @@ export default function Dashboard() {
         </div>
         <div className="flex flex-wrap gap-3">
           <button 
-            onClick={() => addAlert({ type: 'critical', message: 'Test SOS Alert', touristId: '123' })}
+            onClick={() => addAlert({ priority: 'P0', message: 'SOS Panic Button pressed!' })}
             className="bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 px-3 py-1.5 rounded text-sm font-medium transition"
           >
             Add Alert

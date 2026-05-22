@@ -48,13 +48,19 @@ export function useWebSocket() {
         }
       });
 
-      socket.on('alert:new', (data: { type: 'critical' | 'warning' | 'info'; message: string; touristId?: string }) => {
-        if (data?.type && data?.message) {
+      socket.on('alert:new', (data: { priority: 'P0'|'P1'|'P2'|'P3'|'P4'; message: string; touristId?: string }) => {
+        if (data?.priority && data?.message) {
           addAlert(data);
+          if (data.priority === 'P0') {
+            addToast({ message: `SOS CRITICAL: ${data.message}`, type: 'error' });
+            // Attempt to play sound (may be blocked by browser if no prior interaction)
+            const audio = new Audio('/sos-alert.mp3');
+            audio.play().catch(e => console.warn('Audio play blocked:', e));
+          }
         }
       });
 
-      socket.on('alert:updated', (data: { id: string; type?: 'critical' | 'warning' | 'info'; message?: string }) => {
+      socket.on('alert:updated', (data: { id: string; priority?: 'P0'|'P1'|'P2'|'P3'|'P4'; message?: string; status?: 'new'|'acknowledged'|'assigned'|'escalated'|'closed' }) => {
         if (data?.id) {
           updateAlert(data.id, data);
         }
