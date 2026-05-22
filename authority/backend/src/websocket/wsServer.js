@@ -136,6 +136,12 @@ const handleMessage = (ws, msg) => {
     case 'authority:join':
       ws.send(JSON.stringify({ event: 'monitoring_confirmed' }));
       break;
+    case 'subscribe:region':
+      if (data && data.region && ws.clientType === 'authority') {
+        ws.region = data.region;
+        ws.send(JSON.stringify({ event: 'subscribed', data: { region: data.region } }));
+      }
+      break;
     case 'tourist:location':
       if (data && ws.user) {
         positionCache.set(ws.user.id, data);

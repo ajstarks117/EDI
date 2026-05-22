@@ -32,6 +32,14 @@ const derivePriority = ({ source, channel, battery_percent }) => {
   return 'low';
 };
 
+const mapPriorityToContract = (dbPriority) => {
+  if (dbPriority === 'critical') return 'P0';
+  if (dbPriority === 'high') return 'P1';
+  if (dbPriority === 'medium') return 'P2';
+  return 'P3';
+};
+
+
 // ── Public API ─────────────────────────────────────────────────────────────────
 
 /**
@@ -73,15 +81,14 @@ const createAlert = async (touristId, payload) => {
 
   // Step 3 — broadcast to authorities
   broadcastToAuthorities(WS_EVENTS.NEW_SOS, {
+    priority:    mapPriorityToContract(alert.priority),
+    message:     payload.message || \`SOS triggered via \${alert.source}\`,
+    touristId:   alert.tourist_id,
+    // Keeping extra fields just in case
     id:          alert.id,
-    tourist_id:  alert.tourist_id,
-    tourist_name: alert.tourist_name,
     lat:         alert.lat,
     lng:         alert.lng,
-    priority:    alert.priority,
-    source:      alert.source,
-    channel:     alert.channel,
-    created_at:  alert.created_at,
+    status:      alert.status
   });
 
   return { received: true, id: alert.id, severity: alert.priority };
@@ -107,10 +114,10 @@ const escalateOverdue = async () => {
   for (const alert of rows) {
     broadcastToAuthorities(WS_EVENTS.SOS_UPDATE, {
       id:         alert.id,
-      priority:   'critical',
-      escalated:  true,
-      tourist_id: alert.tourist_id,
-      updated_at: new Date().toISOString(),
+      priority:   'P0', // Critical
+      message:    'Alert escalated to Critical due to timeout',
+      status:     alert.status,
+      touristId:  alert.tourist_id
     });
   }
 
@@ -142,11 +149,10 @@ const updateAlertStatus = async (alertId, status, authorityId = null) => {
   const alert = rows[0];
 
   broadcastToAuthorities(WS_EVENTS.SOS_UPDATE, {
-    id:           alert.id,
-    status:       alert.status,
-    authority_id: alert.authority_id,
-    tourist_id:   alert.tourist_id,
-    updated_at:   new Date().toISOString(),
+    id:       alert.id,
+    priority: mapPriorityToContract(alert.priority),
+    status:   alert.status,
+    message:  \`Alert updated to \${alert.status}\`
   });
 
   return alert;

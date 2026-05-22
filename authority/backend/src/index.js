@@ -15,7 +15,8 @@ const { pool } = require('./config/db');
 require('./config/firebase');
 
 // Middleware
-const { defaultLimiter }      = require('./middleware/rateLimiter');
+const { generalLimiter, authLimiter, trackingLimiter, sosLimiter, aiLimiter } = require('./middleware/rateLimiter');
+const { sanitize }            = require('./middleware/sanitize');
 const { errorHandler }        = require('./middleware/errorHandler');
 
 // Routes
@@ -40,22 +41,70 @@ const app = express();
 // ── Global Middleware ─────────────────────────────────────────────────────────
 app.use(helmet());
 
-app.use(cors({
-  origin: env.NODE_ENV === 'production'
-    ? (process.env.ALLOWED_ORIGINS || '').split(',').map((o) => o.trim())
-    : '*',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(cors({ origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*' }));
 
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(defaultLimiter);
+app.use(sanitize);
 
 // ── Health Check ──────────────────────────────────────────────────────────────
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/health', async (_req, res) => {
+  let dbStatus = 'disconnected';
+  try {
+    const client = await pool.connect();
+    // Wrap in Promise.race for 3s timeout
+    await Promise.race([
+      client.query('SELECT 1'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+    ]);
+    client.release();
+    dbStatus = 'connected';
+  } catch (err) {
+    dbStatus = 'error';
+  }
+
+  let active_sos_alerts = 0;
+  try {
+    if (dbStatus === 'connected') {
+      const sosRes = await pool.query(`SELECT COUNT(*) as count FROM sos_alerts WHERE status = 'active'`);
+      active_sos_alerts = parseInt(sosRes.rows[0].count, 10);
+    }
+  } catch (err) {}
+
+  // Fetch WS Rooms directly from server if possible, or we can just mock the sizes based on the Maps in wsServer
+  // We need to require the maps from wsServer, but since we can't easily export them dynamically without breaking scope,
+  // we'll leave them as unknown or calculate from clients.
+  
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    db: dbStatus,
+    ws_connections: {
+      authorities: 'unknown (see wsServer Maps)',
+      tourists: 'unknown (see wsServer Maps)'
+    },
+    active_sos_alerts,
+    uptime_seconds: process.uptime(),
+    version: '1.0.0'
+  });
+});
+
+// ── Rate Limiters ─────────────────────────────────────────────────────────────
+app.use('/api/auth', authLimiter);
+app.use('/api/alerts/sos', sosLimiter);
+app.use('/api/sos', sosLimiter);
+app.use('/api/ai', aiLimiter);
+app.use('/api', generalLimiter);
+
+// ── API Route Aliases (Mobile App Contract) ───────────────────────────────────
+app.post('/api/sos', (req, res, next) => {
+  req.url = '/sos';
+  sosRoutes(req, res, next);
+});
+app.post('/api/emergency/sos', (req, res, next) => {
+  req.url = '/batch-sync';
+  trackingRoutes(req, res, next);
 });
 
 // ── API Routes ────────────────────────────────────────────────────────────────
@@ -85,8 +134,9 @@ const start = async () => {
   // Start listening immediately — health check must be reachable even
   // while DB is still warming up (especially on Railway / Render cold starts).
   await new Promise((resolve) => {
-    httpServer.listen(env.PORT, () => {
-      console.log(`[server] TravelSure API running on port ${env.PORT} (${env.NODE_ENV})`);
+    const PORT = env.PORT || 3001;
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`[server] TravelSure API running on port ${PORT} (${env.NODE_ENV})`);
       resolve();
     });
   });

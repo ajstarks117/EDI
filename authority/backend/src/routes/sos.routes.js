@@ -4,6 +4,7 @@ const router = require('express').Router();
 const { verifyToken }       = require('../middleware/auth');
 const { verifyAuthority }   = require('../middleware/authorityAuth');
 const { sosLimiter }        = require('../middleware/rateLimiter');
+const { auditLog }          = require('../middleware/auditLog');
 const sosController         = require('../controllers/sosController');
 
 // ── Tourist-facing ────────────────────────────────────────────────────────────
@@ -12,6 +13,7 @@ const sosController         = require('../controllers/sosController');
 router.post('/sos',
   verifyToken,
   sosLimiter,
+  auditLog('TRIGGER_SOS'),
   sosController.triggerSOS
 );
 
@@ -32,6 +34,7 @@ router.post('/weather',
 // Update alert status: acknowledged | resolved
 router.patch('/:id/status',
   verifyAuthority,
+  auditLog('UPDATE_SOS_STATUS'),
   sosController.updateStatus
 );
 

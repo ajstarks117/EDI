@@ -22,6 +22,16 @@ const registrationSchema = Joi.object({
 });
 
 const validateRegistration = (req, res, next) => {
+  // Map camelCase to snake_case to support both payload shapes
+  const b = req.body;
+  if (b.fullName && !b.full_name) b.full_name = b.fullName;
+  if (b.idDocumentType && !b.id_document_type) b.id_document_type = b.idDocumentType;
+  if (b.idNumber && !b.id_number) b.id_number = b.idNumber;
+  if (b.bloodGroup && !b.blood_group) b.blood_group = b.bloodGroup;
+  if (b.medicalConditions && !b.medical_conditions) b.medical_conditions = b.medicalConditions;
+  if (b.emergencyContacts && !b.emergency_contacts) b.emergency_contacts = b.emergencyContacts;
+  if (b.firebaseUid && !b.firebase_uid) b.firebase_uid = b.firebaseUid;
+
   // Gracefully parse JSON stringified emergency_contacts from multipart/form-data
   if (typeof req.body.emergency_contacts === 'string') {
     try {

@@ -16,8 +16,17 @@ const sosSchema = Joi.object({
   lng:              Joi.number().min(-180).max(180).required(),
   source:           Joi.string().valid('manual', 'auto', 'ai_triggered').required(),
   channel:          Joi.string().valid('internet', 'sms', 'wifi_direct', 'ble', 'audio').required(),
-  battery_percent:  Joi.number().integer().min(0).max(100).optional().allow(null),
-  relay_tourist_id: Joi.string().optional().allow(null, ''),
+  battery_percent:    Joi.number().integer().min(0).max(100).optional().allow(null),
+  relay_tourist_id:   Joi.string().optional().allow(null, ''),
+  message:            Joi.string().optional().allow(null, ''),
+  blockchain_id_hash: Joi.string().optional().allow(null, ''),
+  connectivity:       Joi.string().valid('online', 'offline').optional().allow(null, ''),
+  emergency_contacts: Joi.array().items(
+    Joi.object({
+      name: Joi.string().optional().allow(null, ''),
+      phone: Joi.string().optional().allow(null, '')
+    })
+  ).optional()
 });
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
@@ -43,7 +52,7 @@ const triggerSOS = async (req, res, next) => {
     }
 
     const result = await createAlert(touristId, value);
-    return res.status(201).json(result);
+    return res.status(201).json({ id: result.id });
   } catch (err) {
     return next(err);
   }

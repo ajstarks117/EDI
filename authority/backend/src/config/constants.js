@@ -44,6 +44,6 @@ module.exports = Object.freeze({
   SOS_PRIORITY,
   SOS_SOURCE,
   SOS_CHANNEL,
-  // WebSocket event name map — all 5 event keys defined here
-  WS_EVENTS: { NEW_SOS: 'sos:new', SOS_UPDATE: 'sos:update', TOURIST_LOCATION: 'tourist:location', ZONE_UPDATE: 'zone:update', WEATHER_ALERT: 'alert:weather' },
+  // WebSocket event name map — aligned to Control Centre contract
+  WS_EVENTS: { NEW_SOS: 'alert:new', SOS_UPDATE: 'alert:updated', TOURIST_LOCATION: 'tourist:location', ZONE_UPDATE: 'zone:activated', WEATHER_ALERT: 'alert:weather' },
 });
