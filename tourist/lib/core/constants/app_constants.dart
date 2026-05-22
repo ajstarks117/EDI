@@ -4,10 +4,15 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class AppConstants {
   AppConstants._();
 
+  /// Set to true to switch back to localhost / local emulator backend.
+  static const bool useLocalBackend = false;
+
   /// Platform-aware backend base URL.
-  /// Android emulator uses 10.0.2.2 to reach host machine's localhost.
-  /// iOS simulator and web use localhost directly.
+  /// Defaults to production Railway URL, falls back to platform-aware local URL if useLocalBackend is true.
   static String get backendBaseUrl {
+    if (!useLocalBackend) {
+      return 'https://edi-production-b35b.up.railway.app';
+    }
     if (kIsWeb) return 'http://localhost:3001';
     if (Platform.isAndroid) return 'http://10.0.2.2:3001';
     return 'http://localhost:3001';
