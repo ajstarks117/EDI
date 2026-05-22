@@ -7,6 +7,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../../../../core/constants/ui_constants.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../safety/services/gps_service.dart';
 
 class SosScreen extends ConsumerStatefulWidget {
@@ -90,13 +91,13 @@ class _SosScreenState extends ConsumerState<SosScreen> with TickerProviderStateM
         final pos = await _gpsService.getCurrentPosition();
         // Try posting to authority backend SOS endpoint
         final response = await Dio().post(
-          'http://10.0.2.2:5000/api/emergency/sos',
+          '${AppConstants.backendBaseUrl}/api/sos',
           data: {
-            'touristId': 'anonymous_tourist',
-            'latitude': pos.latitude,
-            'longitude': pos.longitude,
-            'type': 'CRITICAL EMERGENCY SOS',
-            'description': 'SOS triggered manually by user from Emergency Screen.',
+            'lat': pos.latitude,
+            'lng': pos.longitude,
+            'source': 'manual',
+            'channel': 'internet',
+            'message': 'SOS triggered manually from Emergency Screen.',
           },
           options: Options(
             connectTimeout: const Duration(seconds: 3),

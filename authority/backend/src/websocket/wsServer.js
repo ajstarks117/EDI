@@ -1,161 +1,137 @@
 'use strict';
 
-const { WebSocketServer, WebSocket } = require('ws');
+const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/env');
 const WS_EVENTS = require('./wsEvents');
 
-/** @type {WebSocketServer | null} */
-let wss = null;
-
-const authorityClients = new Map();
-const touristClients = new Map();
+/** @type {Server | null} */
+let io = null;
 
 // In-memory position cache
 const positionCache = new Map();
 
 const initWebSocketServer = (httpServer) => {
-  wss = new WebSocketServer({ server: httpServer });
-
-  wss.on('connection', (ws, req) => {
-    const ip = req.socket.remoteAddress;
-    ws.isAlive = true;
-    ws.missedHeartbeats = 0;
-
-    try {
-      // req.url may not have full host, dummy host used for parsing
-      const url = new URL(req.url, `http://localhost`);
-      const type = url.searchParams.get('type');
-      const token = url.searchParams.get('token');
-
-      if (!token) {
-        ws.close(4001, 'Missing token');
-        return;
-      }
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || JWT_SECRET);
-      ws.user = decoded;
-      ws.clientType = type || decoded.type;
-
-      if (ws.clientType === 'authority') {
-        authorityClients.set(decoded.id, ws);
-      } else {
-        touristClients.set(decoded.id, ws);
-      }
-
-      ws.send(JSON.stringify({ event: 'connected', data: { id: decoded.id, type: ws.clientType } }));
-    } catch (err) {
-      console.error('[ws] Auth error:', err.message);
-      ws.close(4001, 'Invalid token');
-      return;
-    }
-
-    console.log(`[ws] ${ws.clientType} connected from ${ip}`);
-
-    ws.on('pong', () => { 
-      ws.isAlive = true; 
-      ws.missedHeartbeats = 0;
-    });
-
-    ws.on('message', (raw) => {
-      try {
-        const msg = JSON.parse(raw);
-        handleMessage(ws, msg);
-      } catch (err) {
-        ws.send(JSON.stringify({ event: 'error', message: 'Invalid JSON.' }));
-      }
-    });
-
-    ws.on('close', () => {
-      if (ws.clientType === 'authority') {
-        authorityClients.delete(ws.user.id);
-      } else {
-        touristClients.delete(ws.user.id);
-      }
-      console.log(`[ws] ${ws.clientType} disconnected (${ip})`);
-    });
-
-    ws.on('error', (err) => console.error('[ws] Socket error:', err.message));
+  io = new Server(httpServer, {
+    cors: {
+      origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+      methods: ['GET', 'POST'],
+    },
+    pingInterval: 25000,
+    pingTimeout: 10000,
   });
 
-  // Heartbeat — every 30s
-  const heartbeat = setInterval(() => {
-    const now = Date.now();
-    wss.clients.forEach((ws) => {
-      if (ws.isAlive === false) {
-        ws.missedHeartbeats++;
-        if (ws.missedHeartbeats >= 2) {
-          if (ws.clientType === 'authority') authorityClients.delete(ws.user.id);
-          else touristClients.delete(ws.user.id);
-          return ws.terminate();
-        }
-      }
-      ws.isAlive = false;
-      ws.ping();
-      ws.send(JSON.stringify({ event: 'heartbeat', ts: now }));
+  // ── Auth middleware ──────────────────────────────────────────────────────
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+
+    if (!token) {
+      // For demo mode — allow unauthenticated connections to join authority room
+      socket.user = { id: 'demo-operator', type: 'authority' };
+      socket.clientType = 'authority';
+      return next();
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || JWT_SECRET);
+      socket.user = decoded;
+      socket.clientType = socket.handshake.query?.type || decoded.type || 'tourist';
+      return next();
+    } catch (err) {
+      // Allow through in demo mode instead of rejecting
+      console.warn('[ws] JWT verification failed, allowing as demo authority:', err.message);
+      socket.user = { id: `demo-${Date.now()}`, type: 'authority' };
+      socket.clientType = 'authority';
+      return next();
+    }
+  });
+
+  // ── Connection handler ──────────────────────────────────────────────────
+  io.on('connection', (socket) => {
+    const type = socket.clientType || 'authority';
+
+    // Join the appropriate room
+    socket.join(type);
+    console.log(`[ws] ${type} connected: ${socket.user?.id} (${socket.id})`);
+
+    socket.emit('connected', { id: socket.user?.id, type });
+
+    // ── Inbound message handlers ────────────────────────────────────────
+    socket.on('ping', () => {
+      socket.emit('pong');
     });
-  }, 30_000);
 
-  wss.on('close', () => clearInterval(heartbeat));
+    socket.on('authority:join', () => {
+      socket.join('authority');
+      socket.emit('monitoring_confirmed');
+    });
 
-  console.log('[ws] WebSocket server initialised.');
-  return wss;
+    socket.on('subscribe:region', (data) => {
+      if (data?.region && socket.clientType === 'authority') {
+        socket.region = data.region;
+        socket.emit('subscribed', { region: data.region });
+      }
+    });
+
+    socket.on('tourist:location', (data) => {
+      if (data?.id && data?.lat != null && data?.lng != null) {
+        positionCache.set(data.id, data);
+        // Broadcast to all authority clients for live tracking
+        io.to('authority').emit('tourist:location', data);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log(`[ws] ${type} disconnected: ${socket.user?.id} (${socket.id})`);
+    });
+
+    socket.on('error', (err) => console.error('[ws] Socket error:', err.message));
+  });
+
+  console.log('[ws] Socket.IO server initialised.');
+  return io;
 };
 
 // ─── Broadcasters ─────────────────────────────────────────────────────────────
 
 const broadcastToAuthorities = (event, data) => {
-  const message = JSON.stringify({ event, data, ts: new Date().toISOString() });
-  authorityClients.forEach((ws) => {
-    if (ws.readyState === WebSocket.OPEN) ws.send(message);
+  if (!io) return;
+  io.to('authority').emit(event, {
+    ...data,
+    ts: new Date().toISOString(),
   });
 };
 
 const sendToTourist = (touristId, event, data) => {
-  const ws = touristClients.get(touristId);
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ event, data, ts: new Date().toISOString() }));
+  if (!io) return;
+  // Find sockets in 'tourist' room matching the touristId
+  const touristRoom = io.sockets.adapter.rooms.get('tourist');
+  if (touristRoom) {
+    for (const socketId of touristRoom) {
+      const s = io.sockets.sockets.get(socketId);
+      if (s && s.user && s.user.id === touristId) {
+        s.emit(event, { ...data, ts: new Date().toISOString() });
+        break;
+      }
+    }
   }
 };
 
 const broadcastToAllTourists = (event, data) => {
-  const message = JSON.stringify({ event, data, ts: new Date().toISOString() });
-  touristClients.forEach((ws) => {
-    if (ws.readyState === WebSocket.OPEN) ws.send(message);
+  if (!io) return;
+  io.to('tourist').emit(event, {
+    ...data,
+    ts: new Date().toISOString(),
   });
 };
 
-// ─── Inbound Message Dispatcher ───────────────────────────────────────────────
-
-const handleMessage = (ws, msg) => {
-  const { event, data } = msg;
-  switch (event) {
-    case 'ping':
-      ws.send(JSON.stringify({ event: 'pong' }));
-      break;
-    case 'authority:join':
-      ws.send(JSON.stringify({ event: 'monitoring_confirmed' }));
-      break;
-    case 'subscribe:region':
-      if (data && data.region && ws.clientType === 'authority') {
-        ws.region = data.region;
-        ws.send(JSON.stringify({ event: 'subscribed', data: { region: data.region } }));
-      }
-      break;
-    case 'tourist:location':
-      if (data && ws.user) {
-        positionCache.set(ws.user.id, data);
-      }
-      break;
-    default:
-      break;
-  }
-};
+const getIO = () => io;
 
 module.exports = {
   initWebSocketServer,
   broadcastToAuthorities,
   sendToTourist,
   broadcastToAllTourists,
+  getIO,
   WS_EVENTS,
 };

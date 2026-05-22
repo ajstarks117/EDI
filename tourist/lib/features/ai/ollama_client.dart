@@ -35,7 +35,7 @@ class OllamaClient {
     required bool isOnline,
   }) async {
     if (isOnline) {
-      const url = '${AppConstants.backendBaseUrl}/ai/chat';
+      final url = '${AppConstants.backendBaseUrl}/ai/chat';
       try {
         final response = await _dio.post(
           url,

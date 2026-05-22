@@ -31,7 +31,7 @@ const initialState = {
   mapDefaultZoom: 12,
   soundVolume: 0.8,
   notificationsEnabled: true,
-  apiBaseUrl: import.meta.env.VITE_BACKEND_SOCKET_URL || 'http://localhost:4000',
+  apiBaseUrl: import.meta.env.VITE_BACKEND_SOCKET_URL || 'http://localhost:3001',
   operatorProfile: {
     name: 'Officer Abhijeet',
     role: 'admin',

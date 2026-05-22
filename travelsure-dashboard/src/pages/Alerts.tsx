@@ -8,6 +8,8 @@ import { useRBAC } from '../hooks/useRBAC';
 import IncidentReportModal from '../components/IncidentReportModal';
 import { SkeletonRow } from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
+import { useTouristStore } from '../store/useTouristStore';
+import { useUIStore } from '../store/useUIStore';
 import { useState } from 'react';
 
 const PriorityIcon = ({ priority }: { priority: Alert['priority'] }) => {
@@ -89,7 +91,17 @@ export default function Alerts() {
 
   const handleViewTourist = (touristId?: string) => {
     if (!touristId) return;
-    // For now navigate to map, in full implementation we set flyToLocation and selectedTourist
+    const { setFlyToLocation, setRightPanelOpen } = useUIStore.getState();
+    const { positions, selectTourist } = useTouristStore.getState();
+    
+    // Try to find tourist in positions cache
+    if (positions[touristId]) {
+      const pos = positions[touristId];
+      setFlyToLocation([pos.lng, pos.lat]);
+      setRightPanelOpen(true);
+      selectTourist(touristId);
+    }
+    
     navigate('/map');
   };
 

@@ -15,9 +15,10 @@ class GeofenceZone {
     required this.isActive,
   });
 
+  /// Parses from JSON, handling both camelCase (app) and snake_case (backend) field names.
   factory GeofenceZone.fromJson(Map<String, dynamic> json) {
     final List<List<double>> coords = [];
-    final rawCoords = json['polygonCoordinates'];
+    final rawCoords = json['polygonCoordinates'] ?? json['polygon_coordinates'];
     if (rawCoords is List) {
       for (var pointRaw in rawCoords) {
         if (pointRaw is List) {
@@ -37,10 +38,10 @@ class GeofenceZone {
     return GeofenceZone(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      zoneType: json['zoneType']?.toString() ?? '',
+      zoneType: (json['zoneType'] ?? json['zone_type'])?.toString() ?? '',
       polygonCoordinates: coords,
-      advisoryText: json['advisoryText']?.toString() ?? '',
-      isActive: json['isActive'] as bool? ?? false,
+      advisoryText: (json['advisoryText'] ?? json['advisory_text'])?.toString() ?? '',
+      isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? false,
     );
   }
 

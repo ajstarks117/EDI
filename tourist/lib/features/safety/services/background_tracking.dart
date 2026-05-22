@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:workmanager/workmanager.dart';
 import 'gps_service.dart';
 import '../../geofence/geofence_cache_service.dart';
+import '../../../core/constants/app_constants.dart';
 
 @pragma('vm:entry-point')
 void backgroundCallbackDispatcher() {
@@ -70,7 +71,7 @@ void backgroundCallbackDispatcher() {
 
         // Post location update
         await dio.post(
-          'http://10.0.2.2:5000/api/emergency/sos', // SOS HTTP POST endpoint from authority backend
+          '${AppConstants.backendBaseUrl}/api/emergency/sos', // SOS HTTP POST endpoint from authority backend
           data: {
             'touristId': touristId,
             'touristName': touristName,

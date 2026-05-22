@@ -69,32 +69,43 @@ export const useTouristStore = create<TouristState>((set) => ({
   initializeData: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { fetchWithRetry } = await import('../utils/fetchWithRetry');
-      
-      const mockFetch = async () => {
-        return new Promise<Record<string, Tourist>>((resolve, reject) => {
-          setTimeout(() => {
-            if (Math.random() < 0.1) {
-              reject(new Error('Simulated network failure'));
-            } else {
-              resolve(INITIAL_MOCK_POSITIONS);
-            }
-          }, 1500);
-        });
-      };
-
-      const data = await fetchWithRetry(mockFetch, { 
-        maxRetries: 3, 
-        errorContext: 'Tourist Tracking Data' 
+      const { useSettingsStore } = await import('./useSettingsStore');
+      const { apiBaseUrl } = useSettingsStore.getState();
+      const res = await fetch(`${apiBaseUrl}/api/tourists`, {
+        headers: { 'Content-Type': 'application/json' },
       });
-
-      set({ positions: data, isLoading: false });
+      if (res.ok) {
+        const json = await res.json();
+        const tourists = json.data?.tourists || json.tourists || [];
+        const positions: Record<string, Tourist> = {};
+        for (const t of tourists) {
+          const id = t.tourist_id || t.id;
+          positions[id] = {
+            id,
+            lat: t.last_lat ?? t.lat ?? 18.5204,
+            lng: t.last_lng ?? t.lng ?? 73.8567,
+            lastUpdated: new Date(t.updated_at || Date.now()).getTime(),
+            status: 'safe',
+            trail: [],
+            name: t.full_name || t.name,
+            photo: t.profile_photo_url || `https://i.pravatar.cc/150?u=${id}`,
+            nationality: t.nationality,
+            languages: t.languages || [],
+            emergencyContact: t.phone,
+            isIdentityVerified: !!t.identity_hash,
+          };
+        }
+        if (Object.keys(positions).length > 0) {
+          set({ positions, isLoading: false });
+          return;
+        }
+      }
     } catch (err) {
-      set({ 
-        error: err instanceof Error ? err.message : 'Failed to fetch tourists', 
-        isLoading: false 
-      });
+      console.warn('[tourists] Backend fetch failed, using mock data:', err);
     }
+
+    // Fallback: use mock positions
+    set({ positions: INITIAL_MOCK_POSITIONS, isLoading: false });
   },
   updatePosition: (id, position, status) => set((state) => {
     const existing = state.positions[id];

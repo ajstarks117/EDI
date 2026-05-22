@@ -47,26 +47,30 @@ export const useAlertStore = create<AlertState>((set) => ({
   initializeData: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { fetchWithRetry } = await import('../utils/fetchWithRetry');
-      
-      const mockFetch = async () => {
-        return new Promise<Alert[]>((resolve, reject) => {
-          setTimeout(() => {
-            // Simulate 10% failure rate for testing retries
-            if (Math.random() < 0.1) {
-              reject(new Error('Simulated network failure'));
-            } else {
-              resolve(generateMockAlerts());
-            }
-          }, 1500); // 1.5s delay to show skeletons
-        });
-      };
-
-      const data = await fetchWithRetry(mockFetch, { 
-        maxRetries: 3, 
-        errorContext: 'Alert Feed Data' 
+      const { apiBaseUrl } = useSettingsStore.getState();
+      const res = await fetch(`${apiBaseUrl}/api/alerts?limit=50`, {
+        headers: { 'Content-Type': 'application/json' },
       });
+      if (res.ok) {
+        const json = await res.json();
+        const backendAlerts = (json.data?.alerts || json.alerts || []).map((a: any) => ({
+          id: a.id,
+          priority: a.priority === 'critical' ? 'P0' : a.priority === 'high' ? 'P1' : a.priority === 'medium' ? 'P2' : 'P3',
+          message: a.message || `SOS from ${a.tourist_name || 'Tourist'} at (${a.lat}, ${a.lng})`,
+          touristId: a.tourist_id || a.tourist_ref_id,
+          timestamp: new Date(a.created_at || Date.now()).getTime(),
+          status: a.status === 'active' ? 'new' : a.status as Alert['status'],
+        }));
+        set({ alertFeed: backendAlerts, isLoading: false });
+        return;
+      }
+    } catch (err) {
+      console.warn('[alerts] Backend fetch failed, using mock data:', err);
+    }
 
+    // Fallback: generate mock alerts
+    try {
+      const data = generateMockAlerts();
       set({ alertFeed: data, isLoading: false });
     } catch (err) {
       set({ 

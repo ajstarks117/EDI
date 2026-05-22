@@ -97,14 +97,131 @@ app.use('/api/sos', sosLimiter);
 app.use('/api/ai', aiLimiter);
 app.use('/api', generalLimiter);
 
-// ── API Route Aliases (Mobile App Contract) ───────────────────────────────────
-app.post('/api/sos', (req, res, next) => {
-  req.url = '/sos';
-  sosRoutes(req, res, next);
+// ── Demo-Bypass SOS Route (No JWT — for SIH demo) ─────────────────────────────
+// The tourist app sends SOS here without a JWT token. We accept the payload,
+// persist if DB is available, and broadcast to the authority dashboard via Socket.IO.
+const { broadcastToAuthorities, getIO } = require('./websocket/wsServer');
+const WS_EVENTS = require('./websocket/wsEvents');
+const { v4: uuidv4 } = require('uuid');
+
+app.post('/api/sos', async (req, res) => {
+  try {
+    const { lat, lng, message, source, blockchain_id_hash, battery_percent,
+            connectivity, emergency_contacts, channel } = req.body;
+
+    // Derive priority: manual trigger or low battery = P0, non-internet = P2, else P3
+    let priority = 'P3';
+    if (source === 'manual' || (battery_percent != null && battery_percent < 15)) {
+      priority = 'P0';
+    } else if (channel !== 'internet') {
+      priority = 'P2';
+    }
+
+    const alertId = uuidv4();
+    const alertMessage = message || `SOS triggered via ${source || 'unknown'}`;
+
+    // Try to persist in DB
+    let dbInserted = false;
+    try {
+      // Look up tourist by blockchain_id_hash or create a demo record
+      let touristDbId = null;
+      if (blockchain_id_hash) {
+        const { rows } = await pool.query(
+          `SELECT id FROM tourists WHERE identity_hash = $1 LIMIT 1`,
+          [blockchain_id_hash]
+        );
+        if (rows.length > 0) touristDbId = rows[0].id;
+      }
+
+      if (!touristDbId) {
+        // Try to find any tourist for demo
+        const { rows } = await pool.query(`SELECT id FROM tourists LIMIT 1`);
+        touristDbId = rows.length > 0 ? rows[0].id : null;
+      }
+
+      if (touristDbId) {
+        const dbPriority = priority === 'P0' ? 'critical' : priority === 'P2' ? 'medium' : 'low';
+        await pool.query(
+          `INSERT INTO sos_alerts (id, tourist_id, lat, lng, source, channel, battery_percent, priority, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')`,
+          [alertId, touristDbId, lat || 0, lng || 0, source || 'manual',
+           channel || 'internet', battery_percent || 100, dbPriority]
+        );
+        dbInserted = true;
+      }
+    } catch (dbErr) {
+      console.warn('[demo-sos] DB insert failed (non-fatal):', dbErr.message);
+    }
+
+    // Broadcast to all authority dashboard sockets — this is the critical piece
+    broadcastToAuthorities('alert:new', {
+      id:         alertId,
+      priority:   priority,
+      message:    alertMessage,
+      touristId:  blockchain_id_hash || 'demo-tourist',
+      lat:        lat || 0,
+      lng:        lng || 0,
+      status:     'new',
+      source:     source || 'manual',
+      channel:    channel || 'internet',
+      battery_percent: battery_percent,
+      connectivity: connectivity,
+      emergency_contacts: emergency_contacts,
+    });
+
+    console.log(`[demo-sos] SOS broadcast — ${priority} — lat:${lat} lng:${lng} (db:${dbInserted})`);
+
+    return res.status(201).json({ id: alertId });
+  } catch (err) {
+    console.error('[demo-sos] Error:', err);
+    return res.status(500).json({ error: 'SOS processing failed' });
+  }
 });
-app.post('/api/emergency/sos', (req, res, next) => {
-  req.url = '/batch-sync';
-  trackingRoutes(req, res, next);
+
+// ── Demo Location Sync (Background tracking from tourist app) ─────────────────
+app.post('/api/emergency/sos', async (req, res) => {
+  try {
+    const { touristId, touristName, latitude, longitude, type, description } = req.body;
+
+    // Broadcast as tourist:location event to authority dashboards
+    const io = getIO();
+    if (io) {
+      io.to('authority').emit('tourist:location', {
+        id: touristId || 'unknown',
+        name: touristName || 'Tourist',
+        lat: latitude || 0,
+        lng: longitude || 0,
+        status: type === 'CRITICAL EMERGENCY SOS' ? 'critical' : 'safe',
+        ts: new Date().toISOString(),
+      });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('[demo-location] Error:', err);
+    return res.status(500).json({ error: 'Location sync failed' });
+  }
+});
+
+// ── Geofence Zones — Tourist App Alias ────────────────────────────────────────
+// Tourist app calls GET /geofence/zones (without /api prefix)
+app.get('/geofence/zones', (req, res, next) => {
+  req.url = '/zones';
+  geofenceRoutes(req, res, next);
+});
+
+// ── AI Chat Proxy — Tourist App Alias ─────────────────────────────────────────
+// Tourist app calls POST /ai/chat (without /api prefix)
+app.post('/ai/chat', (req, res, next) => {
+  req.url = '/chat';
+  aiRoutes(req, res, next);
+});
+
+// ── Auth Register — Tourist App Alias ─────────────────────────────────────────
+// Tourist app calls POST /auth/register (without /api prefix)
+app.post('/auth/register', (req, res, next) => {
+  req.url = '/register';
+  authRoutes(req, res, next);
 });
 
 // ── API Routes ────────────────────────────────────────────────────────────────

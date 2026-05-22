@@ -7,7 +7,7 @@ import { useSettingsStore } from '../store/useSettingsStore';
 
 // Create a singleton socket instance outside the hook
 // It's configured to not connect automatically so we can control it in the hook.
-const SOCKET_URL = import.meta.env.VITE_BACKEND_SOCKET_URL || 'http://localhost:4000';
+const SOCKET_URL = import.meta.env.VITE_BACKEND_SOCKET_URL || 'http://localhost:3001';
 
 export const socket: Socket = io(SOCKET_URL, {
   autoConnect: false,
@@ -61,7 +61,7 @@ export function useWebSocket() {
         }
       }, 250);
 
-      socket.on('alert:new', (data: { priority: 'P0'|'P1'|'P2'|'P3'|'P4'; message: string; touristId?: string }) => {
+      socket.on('alert:new', (data: { priority: 'P0'|'P1'|'P2'|'P3'|'P4'; message: string; touristId?: string; lat?: number; lng?: number; id?: string }) => {
         if (data?.priority && data?.message) {
           addAlert(data);
           if (data.priority === 'P0') {
@@ -101,6 +101,8 @@ export function useWebSocket() {
               });
             }
 
+            // Fly to tourist's position — check positions cache first, fall back to alert coordinates
+            let didFly = false;
             if (data.touristId) {
               const positions = useTouristStore.getState().positions;
               if (positions[data.touristId]) {
@@ -108,6 +110,17 @@ export function useWebSocket() {
                 setFlyToLocation([pos.lng, pos.lat]);
                 setRightPanelOpen(true);
                 useTouristStore.getState().selectTourist(data.touristId);
+                didFly = true;
+              }
+            }
+            // If tourist not in cache, use alert's own lat/lng from the SOS payload
+            if (!didFly && data.lat != null && data.lng != null) {
+              setFlyToLocation([data.lng, data.lat]);
+              setRightPanelOpen(true);
+              // Also add the tourist to positions so they appear on the map
+              if (data.touristId) {
+                const tStore = useTouristStore.getState();
+                tStore.updatePosition(data.touristId, { lat: data.lat, lng: data.lng }, 'critical');
               }
             }
           }
@@ -120,12 +133,29 @@ export function useWebSocket() {
         }
       });
 
-      socket.on('zone:activated', (data: { name: string; type: string }) => {
+      socket.on('zone:activated', (data: { name: string; type: string; zone?: any; action?: string }) => {
         if (data?.name) {
           addToast({
-            message: `Geofence zone activated: ${data.name}`,
+            message: `Geofence zone ${data.action === 'update' ? 'updated' : 'activated'}: ${data.name}`,
             type: data.type === 'danger' ? 'error' : 'info'
           });
+
+          // Also add/update the zone in the geofence store for map rendering
+          if (data.zone) {
+            const { useGeofenceStore } = require('../store/useGeofenceStore');
+            const store = useGeofenceStore.getState();
+            const newZone = {
+              id: data.zone.id?.toString() || crypto.randomUUID(),
+              name: data.zone.name || data.name,
+              type: (data.zone.zone_type || data.zone.zoneType || 'warning') as 'warning' | 'restricted' | 'exclusion',
+              coordinates: data.zone.polygonCoordinates || data.zone.polygon_coordinates || data.zone.coordinates || [],
+            };
+            if (data.action === 'update') {
+              store.updateGeofence(newZone.id, newZone);
+            } else {
+              store.addGeofence(newZone);
+            }
+          }
         }
       });
 

@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:dio/dio.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/hive_service.dart';
 
 class GpsService {
   Future<LocationPermission> requestPermission() async {
@@ -129,3 +131,78 @@ final gpsActiveProvider = StateNotifierProvider<GpsActiveNotifier, bool>((ref) {
   return GpsActiveNotifier(ref);
 });
 
+// ---------------------------------------------------------------------------
+// Location Sharing — POST position to backend for live map on dashboard
+// ---------------------------------------------------------------------------
+
+class LocationSharingNotifier extends StateNotifier<bool> {
+  final Ref _ref;
+  Timer? _shareTimer;
+  final _dio = Dio();
+
+  LocationSharingNotifier(this._ref) : super(false);
+
+  /// Start sharing location to backend every [intervalSeconds].
+  void startSharing({int intervalSeconds = 30}) {
+    if (state) return; // already sharing
+    state = true;
+
+    _shareTimer?.cancel();
+    _shareTimer = Timer.periodic(
+      Duration(seconds: intervalSeconds),
+      (_) => _sendLocation(),
+    );
+
+    // Also send immediately
+    _sendLocation();
+  }
+
+  void stopSharing() {
+    _shareTimer?.cancel();
+    _shareTimer = null;
+    state = false;
+  }
+
+  Future<void> _sendLocation() async {
+    try {
+      final locationAsync = _ref.read(locationStreamProvider);
+      final position = locationAsync.valueOrNull;
+      if (position == null) return;
+
+      // Get tourist ID from Hive cache
+      String touristId = 'unknown';
+      try {
+        final blockData = HiveService.blockchainBox.get('current_record');
+        if (blockData != null) {
+          touristId = (blockData['tourist_id'] ?? blockData['touristId'] ?? 'unknown') as String;
+        }
+      } catch (_) {}
+
+      await _dio.post(
+        '${AppConstants.backendBaseUrl}/api/tracking/location',
+        data: {
+          'lat': position.latitude,
+          'lng': position.longitude,
+          'tourist_id': touristId,
+        },
+        options: Options(
+          connectTimeout: const Duration(seconds: 3),
+          receiveTimeout: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Location share POST failed: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _shareTimer?.cancel();
+    super.dispose();
+  }
+}
+
+final locationSharingProvider =
+    StateNotifierProvider<LocationSharingNotifier, bool>((ref) {
+  return LocationSharingNotifier(ref);
+});

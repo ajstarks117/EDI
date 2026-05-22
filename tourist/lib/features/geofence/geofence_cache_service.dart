@@ -13,6 +13,10 @@ class GeofenceCacheService {
   GeofenceCacheService({Dio? dio}) : _dio = dio ?? Dio();
 
   /// Fetches zones from the backend server and stores them in Hive.
+  /// Handles multiple backend response shapes:
+  ///   - Raw array: [ {...}, {...} ]
+  ///   - Wrapped:   { data: [...] }
+  ///   - Backend:   { success: true, data: { zones: [...] } }
   /// If offline or request fails, falls back to Hive cache silently.
   Future<List<GeofenceZone>> fetchAndCacheZones() async {
     try {
@@ -27,12 +31,25 @@ class GeofenceCacheService {
       if (response.statusCode == 200) {
         final rawData = response.data;
         List<dynamic> listData = [];
+
         if (rawData is List) {
+          // Raw array response
           listData = rawData;
-        } else if (rawData is Map && rawData.containsKey('data')) {
-          final d = rawData['data'];
-          if (d is List) {
-            listData = d;
+        } else if (rawData is Map) {
+          // Check for { data: { zones: [...] } } (backend format)
+          if (rawData.containsKey('data')) {
+            final d = rawData['data'];
+            if (d is Map && d.containsKey('zones')) {
+              final z = d['zones'];
+              if (z is List) listData = z;
+            } else if (d is List) {
+              listData = d;
+            }
+          }
+          // Check for { zones: [...] }
+          if (listData.isEmpty && rawData.containsKey('zones')) {
+            final z = rawData['zones'];
+            if (z is List) listData = z;
           }
         }
 
