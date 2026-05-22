@@ -19,7 +19,7 @@ export const socket: Socket = io(SOCKET_URL, {
 export function useWebSocket() {
   const { addAlert, updateAlert } = useAlertStore();
   const { updatePosition } = useTouristStore();
-  const { setConnectionStatus, addToast } = useUIStore();
+  const { setConnectionStatus, addToast, setFlyToLocation, setRightPanelOpen } = useUIStore();
   
   // Ref to track if we've initialized listeners to prevent duplicates in strict mode
   const initialized = useRef(false);
@@ -56,6 +56,16 @@ export function useWebSocket() {
             // Attempt to play sound (may be blocked by browser if no prior interaction)
             const audio = new Audio('/sos-alert.mp3');
             audio.play().catch(e => console.warn('Audio play blocked:', e));
+
+            if (data.touristId) {
+              const positions = useTouristStore.getState().positions;
+              if (positions[data.touristId]) {
+                const pos = positions[data.touristId];
+                setFlyToLocation([pos.lng, pos.lat]);
+                setRightPanelOpen(true);
+                useTouristStore.getState().selectTourist(data.touristId);
+              }
+            }
           }
         }
       });

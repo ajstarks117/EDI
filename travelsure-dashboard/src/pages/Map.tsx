@@ -3,7 +3,25 @@ import { GoogleMap, useJsApiLoader, MarkerF, PolylineF, PolygonF, DrawingManager
 import { useTouristStore } from '../store/useTouristStore';
 import { useUIStore } from '../store/useUIStore';
 import { useGeofenceStore, type Geofence } from '../store/useGeofenceStore';
-import { X, User, Activity, MapPin, Battery, PhoneCall, ShieldAlert, Trash2, Check } from 'lucide-react';
+import { useAlertStore } from '../store/useAlertStore';
+import { X, User, Activity, MapPin, Battery, PhoneCall, ShieldAlert, Trash2, Check, Radio, Clock, ShieldCheck, CheckCircle } from 'lucide-react';
+import { intervalToDuration } from 'date-fns';
+
+const IncidentTimer = ({ startTime }: { startTime: number }) => {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  
+  const duration = intervalToDuration({ start: startTime, end: now });
+  const formatted = [
+    duration.hours ? `${duration.hours}h` : '',
+    duration.minutes ? `${duration.minutes}m` : '',
+    `${duration.seconds || 0}s`
+  ].filter(Boolean).join(' ');
+  return <span className="font-mono text-rose-400 font-bold tracking-wider">{formatted || '0s'}</span>;
+};
 
 const MAP_CONTAINER_STYLE = {
   width: '100%',
@@ -44,6 +62,7 @@ export default function Map() {
   const { positions, selectedTourist, selectTourist } = useTouristStore();
   const { rightPanelOpen, setRightPanelOpen, flyToLocation, setFlyToLocation } = useUIStore();
   const { geofences, activeFilters, addGeofence, deleteGeofence } = useGeofenceStore();
+  const { alertFeed, updateAlert } = useAlertStore();
 
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
@@ -81,6 +100,7 @@ export default function Map() {
   }, [flyToLocation, setFlyToLocation]);
 
   const activeTourist = selectedTourist ? positions[selectedTourist] : null;
+  const activeAlert = activeTourist?.status === 'critical' ? alertFeed.find(a => a.touristId === activeTourist.id && a.priority === 'P0' && a.status !== 'closed') : null;
   const activeZone = selectedZone ? geofences.find(g => g.id === selectedZone) : null;
 
   // Handle polygon drawn
@@ -244,8 +264,8 @@ export default function Map() {
       {rightPanelOpen && (
         <div className="absolute top-4 right-4 w-80 max-h-[calc(100%-2rem)] overflow-y-auto bg-surface-card/95 backdrop-blur-xl border border-surface-border rounded-xl shadow-2xl flex flex-col z-10 transition-transform duration-300">
           
-          {/* Tourist Profile Panel */}
-          {activeTourist && (
+          {/* Tourist Profile / Incident Panel */}
+          {activeTourist && !activeAlert && (
             <>
               <div className="flex items-center justify-between p-4 border-b border-surface-border">
                 <h3 className="font-outfit font-semibold text-lg flex items-center space-x-2">
@@ -259,7 +279,10 @@ export default function Map() {
               <div className="p-5 space-y-5">
                 <div className="space-y-1">
                   <p className="text-xs text-muted-text uppercase font-semibold">ID Number</p>
-                  <p className="font-mono font-medium">{activeTourist.id}</p>
+                  <p className="font-mono font-medium flex items-center space-x-2">
+                    <span>{activeTourist.id}</span>
+                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -288,11 +311,91 @@ export default function Map() {
                 </div>
               </div>
               <div className="p-4 border-t border-surface-border bg-surface-bg/50">
-                <button className="w-full flex justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium">
+                <button className="w-full flex justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium transition">
                   <PhoneCall className="h-4 w-4" /><span>Ping Device</span>
                 </button>
               </div>
             </>
+          )}
+
+          {/* SOS Incident Card */}
+          {activeTourist && activeAlert && (
+            <div className="bg-rose-500/5">
+              <div className="flex items-center justify-between p-4 border-b border-rose-500/20 bg-rose-500/10">
+                <h3 className="font-outfit font-semibold text-lg flex items-center space-x-2 text-rose-400">
+                  <ShieldAlert className="h-5 w-5 animate-pulse" />
+                  <span>Active Incident</span>
+                </h3>
+                <button onClick={() => setRightPanelOpen(false)} className="p-1 rounded-md hover:bg-rose-500/20 text-rose-400">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-5 space-y-5">
+                <div className="flex justify-between items-center bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-rose-300 uppercase font-semibold flex items-center space-x-1">
+                      <Clock className="h-3.5 w-3.5" /><span>Time since SOS</span>
+                    </span>
+                    <IncidentTimer startTime={activeAlert.timestamp} />
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs text-rose-300 uppercase font-semibold">Status</span>
+                    <span className="font-bold text-rose-400 capitalize">{activeAlert.status}</span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-text uppercase font-semibold">Tourist Identity</p>
+                  <p className="font-mono font-medium flex items-center space-x-2 text-slate-200">
+                    <span>{activeTourist.id}</span>
+                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-text uppercase font-semibold flex items-center space-x-1">
+                    <MapPin className="h-3.5 w-3.5" /><span>Real-time GPS</span>
+                  </p>
+                  <div className="bg-surface-bg p-3 rounded-lg border border-surface-border text-sm font-mono text-slate-300">
+                    <p className="text-rose-300">Lat: {activeTourist.lat.toFixed(6)}</p>
+                    <p className="text-rose-300">Lng: {activeTourist.lng.toFixed(6)}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-text uppercase font-semibold flex items-center space-x-1">
+                    <Radio className="h-3.5 w-3.5" /><span>Communication</span>
+                  </p>
+                  <div className="text-sm space-y-1">
+                    <p className="text-slate-300"><span className="text-slate-500">Channel used:</span> Satellite GPS</p>
+                    <p className="text-slate-300"><span className="text-slate-500">Attempted:</span> GSM (Failed)</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border-t border-rose-500/20 bg-surface-bg/80 flex flex-col space-y-2">
+                {activeAlert.status === 'new' && (
+                  <button 
+                    onClick={() => updateAlert(activeAlert.id, { status: 'acknowledged' })}
+                    className="w-full flex justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium transition"
+                  >
+                    <CheckCircle className="h-4 w-4" /><span>Acknowledge SOS</span>
+                  </button>
+                )}
+                {activeAlert.status === 'acknowledged' && (
+                  <button 
+                    onClick={() => updateAlert(activeAlert.id, { status: 'assigned' })}
+                    className="w-full flex justify-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-medium transition"
+                  >
+                    <User className="h-4 w-4" /><span>Assign Responder</span>
+                  </button>
+                )}
+                {activeAlert.status === 'assigned' && (
+                  <button 
+                    onClick={() => updateAlert(activeAlert.id, { status: 'closed' })}
+                    className="w-full flex justify-center space-x-2 bg-surface-card hover:bg-surface-border border border-surface-border text-slate-300 py-2 rounded-lg font-medium transition"
+                  >
+                    <Check className="h-4 w-4" /><span>Resolve Incident (Add Notes)</span>
+                  </button>
+                )}
+              </div>
+            </div>
           )}
 
           {/* New Zone Creation Panel */}
