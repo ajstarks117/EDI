@@ -1,0 +1,2217 @@
+TravelSure  |  Smart Tourist Safety Monitoring & Incident Response System
+
+TravelSure
+
+Smart Tourist Safety Monitoring & Incident Response System
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Complete Project Playbook  |  SIH Problem Statement ID 25002  |  Team
+
+Ajinkya
+
+Ajaya
+
+Rishi
+
+Abhijeet
+
+Flutter App Lead
+& Blockchain
+
+Backend & API
+Architect
+
+AI Assistant
+& Geo-fencing
+
+React Dashboard
+& UI/UX Lead
+
+
+
+"When every second counts in an emergency, TravelSure ensures no tourist is ever truly alone — AI-powered, offline-resilient, and blockchain-verified."
+
+
+
+
+Table of Contents
+
+
+
+
+
+
+
+
+SECTION 1 — EXECUTIVE SUMMARY
+
+
+
+1.1 Project Overview
+
+TravelSure is a comprehensive, AI-powered tourist safety ecosystem purpose-built to protect tourists navigating remote, high-risk, or unfamiliar destinations across India and beyond. It is the answer to SIH Problem Statement ID 25002, which identifies the gap between the rapid growth of domestic and international tourism and the dangerously inadequate safety infrastructure available to tourists, especially in India's mountainous, coastal, and forested regions. TravelSure is not a single app — it is a full-stack, multi-stakeholder safety platform spanning a Flutter-based tourist mobile application, a React.js authority monitoring dashboard, a cloud backend, blockchain-anchored digital identity, an offline-resilient emergency communication layer, and an on-device AI safety assistant.
+
+
+
+1.2 Vision
+
+TravelSure's vision: A world where every tourist, regardless of connectivity, language, or location, has instant access to safety tools, verified identity, emergency assistance, and real-time situational awareness — with zero dependence on internet availability.
+
+
+
+1.3 Mission
+
+TravelSure's mission is to bridge the critical safety gap in Indian tourism by deploying a production-grade, offline-first, AI-assisted safety network that connects tourists, police departments, emergency services, and tourism authorities into a single, real-time, actionable ecosystem. The platform reduces emergency response time, eliminates identity fraud, ensures no SOS is ever lost — even in zero-connectivity zones — and uses AI to proactively prevent incidents before they escalate.
+
+
+
+1.4 Problem Statement Analysis
+
+India receives over 1.9 billion domestic tourist visits annually (Ministry of Tourism, 2023). Yet safety infrastructure for tourists is fragmented, reactive, and entirely dependent on mobile internet connectivity. The core problem can be broken into five dimensions:
+
+Connectivity Failure in Remote Zones: 43% of Indian tourist destinations (Himalayan trekking routes, Andaman islands, forest reserves, desert circuits) have unreliable or no mobile data coverage. A tourist who loses connectivity during an emergency has zero safety tools available.
+
+Identity Verification Gap: There is no standardized, tamper-proof digital identity system for tourists. Hotel check-ins, entry to protected areas, and emergency responder access to tourist records all rely on paper documents, which can be lost, forged, or simply unavailable in a crisis.
+
+Delayed Emergency Response: Without real-time location tracking or automated alert systems, emergency response in tourist areas averages 45–90 minutes. In medical emergencies, river accidents, or wildlife encounters, this delay is often fatal.
+
+No Geo-Aware Safety Intelligence: Tourists have no way to know if they are entering a danger zone — a flood-prone valley, an area with recent criminal activity, a restricted forest buffer — until it is too late.
+
+Language Barrier in Emergencies: India has 22 scheduled languages. A tourist from Tamil Nadu stranded in Ladakh, or a foreign tourist anywhere, faces a communication wall during emergencies that no existing app addresses at scale.
+
+
+
+1.5 Real-World Relevance & Why This Matters
+
+Between 2019 and 2023, India recorded over 12,000 tourist fatalities annually across trekking accidents, flash floods, road mishaps, and wildlife incidents. A significant percentage of these deaths occurred in locations with poor cellular coverage, and post-mortem investigations frequently revealed that victims had no means to send distress signals or were unknown to local authorities. TravelSure directly addresses these statistics by creating a layered safety net — multiple fallback communication channels, proactive geo-fencing, AI-guided first response, and instant identity verification for search-and-rescue teams.
+
+
+
+1.6 Target Users & Stakeholder Map
+
+Stakeholder
+
+Role in TravelSure
+
+Primary App Interface
+
+Key Value Delivered
+
+Individual Tourist
+
+End-user seeking safety
+
+Flutter Mobile App
+
+Emergency SOS, AI guidance, geo-alerts, offline comm
+
+Police Departments
+
+First responders
+
+Authority Dashboard
+
+Real-time location data, SOS alerts, tourist ID access
+
+Tourism Authorities
+
+Oversight & planning
+
+Authority Dashboard
+
+Cluster tracking, zone management, analytics
+
+Emergency Services
+
+Medical, rescue
+
+Authority Dashboard + API
+
+Automated alert routing, GPS coordinates, medical history
+
+Disaster Response Teams
+
+Large-scale crises
+
+Dashboard + API
+
+Mass tourist tracking, evacuation zone coordination
+
+Hotel / Checkpoint Staff
+
+Identity verification
+
+QR scan (Web/App)
+
+Instant blockchain tourist ID verification
+
+
+
+1.7 Innovation Highlights
+
+Offline-First Architecture: TravelSure is designed to work when the internet does not. GPS tracks locally, emergency SOS broadcasts via BLE mesh, SMS, Wi-Fi Direct, and audio proximity signals — ensuring zero signal loss.
+
+Blockchain-Anchored Digital Tourist ID: Each tourist receives a cryptographically unique, tamper-proof digital ID stored on a blockchain. Authorities can verify identity in real time via QR scan even without internet access to the original server.
+
+On-Device AI Safety Assistant: A lightweight, offline-capable AI model (Ollama/Mistral integration) provides contextual emergency guidance — first aid, route navigation, SOS scripting — directly on the device with no internet dependency.
+
+Multi-Layer SOS Cascade: The five-tier SOS system (Internet → SMS → Wi-Fi Direct → BLE Mesh → Audio Signaling) ensures that a distress call reaches authorities through at least one channel regardless of connectivity conditions.
+
+Dynamic Geo-Fencing: Authorities can draw, adjust, and broadcast geo-fence zones in real time. Tourists entering danger zones receive immediate push alerts. The system supports weather-triggered automatic zone activation.
+
+AI Anomaly Detection (Future): The platform is architecturally prepared for AI-powered anomaly detection — identifying unusual tourist movement patterns, stationary alerts, and predictive risk scoring — laying groundwork for a next-generation safety intelligence layer.
+
+
+
+1.8 SIH Positioning Strategy
+
+TravelSure is positioned as India's first offline-first, AI-augmented, blockchain-verified tourist safety platform — a statement that checks all three of the SIH judging pillars: Innovation (AI + blockchain + offline mesh), Practicality (Flutter app + React dashboard + real emergency services integration), and Scalability (microservices backend, cloud-ready, government API integration path). The demo strategy centers on showing a live SOS cascade failing over from internet to BLE mesh, a blockchain ID QR scan, and the AI assistant providing offline first-aid guidance — three moments that are visually dramatic and technically undeniable.
+
+
+
+
+SECTION 2 — SYSTEM ARCHITECTURE
+
+
+
+2.1 Overall Architecture Philosophy
+
+TravelSure is built on three architectural pillars: Offline-First Resilience (the system degrades gracefully and never loses critical data when connectivity fails), Decentralized Trust (blockchain-anchored identity eliminates single points of failure and enables offline verification), and Real-Time Intelligence (WebSocket-driven dashboards and event-driven backend ensure that all stakeholders have the freshest possible situational picture). The architecture separates concerns cleanly across four major zones: the Tourist Edge (Flutter app + BLE mesh), the Authority Edge (React dashboard + monitoring tools), the Cloud Backend (Flask/Node.js microservices + Firebase/PostgreSQL), and the Decentralized Trust Layer (blockchain ID registry).
+
+
+
+2.2 Tourist App Architecture
+
+The Flutter tourist app is organized as a modular, layered application. At the presentation layer, screens and widgets are built using a responsive, accessibility-first widget tree. Below that sits the state management layer (Riverpod or Bloc), which manages the app's reactive data streams. The service layer coordinates all external interactions: GPS service, BLE service, Wi-Fi Direct service, SMS service, blockchain verification API client, and the AI assistant service. The data layer handles local SQLite/Hive storage for offline GPS buffering, emergency contact caching, and AI model data. Background services are isolated as Flutter background tasks using WorkManager/background_fetch, ensuring GPS tracking and SOS monitoring continue even when the app is backgrounded or the screen is off.
+
+App Layer
+
+Components
+
+Technology
+
+Presentation
+
+Screens, Widgets, Animations
+
+Flutter / Dart
+
+State Management
+
+Global state, reactive streams
+
+Riverpod / Bloc
+
+Service Layer
+
+GPS, BLE, SMS, AI, Blockchain APIs
+
+Dart service classes
+
+Data Layer
+
+Local DB, offline cache, sync queue
+
+Hive / SQLite / SharedPreferences
+
+Background Tasks
+
+GPS polling, SOS monitor, sync
+
+WorkManager / background_fetch
+
+Communication
+
+HTTP, WebSocket, BLE, Wi-Fi Direct
+
+Dio / flutter_blue_plus / nearby_connections
+
+
+
+2.3 Authority Dashboard Architecture
+
+The React.js authority dashboard is a single-page application (SPA) built with a component-driven architecture. The top-level application shell provides authentication routing and global context providers. Below that, feature modules are independently organized: the Live Map module (Mapbox GL JS with real-time tourist/alert overlays), the Alert Management module (WebSocket-driven feed with priority queue visualization), the Geo-fence Management module (interactive polygon drawing and zone CRUD), the Analytics module (D3/Recharts-powered safety statistics), and the Tourist Registry module (blockchain ID lookup and verification). The dashboard connects to the backend via REST APIs for data retrieval and WebSockets for real-time alert streaming.
+
+
+
+2.4 Backend Architecture
+
+The backend is structured as a set of microservices (or modular monolith for SIH demo) built with Flask (Python) or Node.js (Express). Core service boundaries include: Authentication Service (JWT/OAuth2 for tourist and authority login), Tracking Service (GPS event ingestion, location history), Emergency Service (SOS event processing, alert routing, escalation logic), Geo-fence Service (zone definition, tourist-zone intersection detection), Blockchain Service (ID issuance, verification, hash management), AI Proxy Service (bridging to local Ollama instance or cloud AI API), and Notification Service (FCM push, SMS via Twilio/MSG91, email). All services share a PostgreSQL relational database for structured data and Firebase Realtime Database for low-latency event streaming to the dashboard.
+
+
+
+2.5 API Communication
+
+The system uses a dual-channel communication strategy. REST APIs over HTTPS handle CRUD operations: tourist registration, profile management, geo-fence creation, blockchain ID issuance, analytics queries. WebSockets (Socket.IO) handle real-time streaming: GPS location updates from tourist app to backend (every 15–30 seconds when active), alert events from backend to dashboard (sub-second latency), and SOS status updates. The tourist app uses a request queue pattern: when offline, API calls are stored in a local queue and replayed automatically upon reconnection. GPS events are stored in local Hive boxes and batch-synced when internet is restored.
+
+
+
+2.6 Emergency Communication Flow
+
+The multi-layer emergency communication cascade is the most architecturally critical component. When a tourist activates SOS, the following sequence executes:
+
+Layer 1 — Internet (Primary): The app immediately attempts to POST the SOS event to the backend API, including GPS coordinates, device ID, tourist blockchain ID, and a timestamp. On success, the backend routes the alert to the authority dashboard via WebSocket, triggers FCM push to emergency contacts, and dispatches SMS via the notification service.
+
+Layer 2 — SMS Fallback: If internet POST fails within 3 seconds, the app sends a pre-formatted SMS to a registered emergency number (police, emergency contacts). The SMS includes coordinates in a format that the backend's SMS ingest webhook can parse and process.
+
+Layer 3 — Wi-Fi Direct / Nearby API: Simultaneously, the app broadcasts a SOS payload over Wi-Fi Direct using the Android Nearby Connections API. Any other TravelSure user within 100m who has internet connectivity can relay the SOS upstream.
+
+Layer 4 — BLE Mesh: The app activates BLE advertising mode, broadcasting a compact SOS beacon (tourist ID + coordinates + timestamp) that can propagate across multiple hops of nearby BLE-enabled devices (other TravelSure users) until it reaches a node with internet access.
+
+Layer 5 — Audio Proximity Signal: As a last resort, the app activates a loud, patterned audio alert (a coded beep sequence) at maximum volume, alerting physically proximate humans. The pattern is internationally recognizable as a distress signal.
+
+
+
+2.7 Blockchain Integration Architecture
+
+The blockchain layer uses a mock blockchain (implemented as a cryptographically-chained linked list stored on the backend) for SIH demo purposes, with a path to Ethereum testnet (Sepolia) or a permissioned Hyperledger Fabric network for production. When a tourist registers, the backend generates a SHA-256 hash of their identity data (name, ID document number, registration timestamp, emergency contacts). This hash is stored as a block in the chain. A QR code encoding the tourist's blockchain address and verification hash is issued to the tourist app. When any authority scans the QR, the backend looks up the chain entry and returns the verified identity data — with cryptographic proof of integrity.
+
+
+
+2.8 Offline-First Architecture
+
+Every critical function in TravelSure has an offline counterpart. GPS coordinates are written to a local Hive database every 30 seconds regardless of connectivity. SOS events are queued locally and retried on reconnection. The AI assistant runs on a quantized model stored locally on the device. Emergency contact data, geo-fence zone definitions, and the tourist's own blockchain ID QR are cached locally at registration time. The app uses a connectivity monitor (connectivity_plus package) to detect state changes and trigger sync operations. A visual indicator in the app's header always shows the current connectivity state, ensuring tourists are aware of their communication capabilities at all times.
+
+
+
+2.9 AI Assistant Architecture
+
+The on-device AI assistant is built around a lightweight quantized language model (Mistral 7B Q4 or Phi-2 quantized) loaded via Ollama integration or a direct GGUF file loaded with llama.cpp bindings for Flutter. The assistant maintains a context window containing the tourist's current location, geo-fence status, recent activity, and a pre-loaded emergency knowledge base (first aid procedures, area-specific hazards, emergency numbers). A prompt engineering layer wraps user queries with this context before inference. The assistant is intentionally scoped to safety guidance — it does not function as a general chatbot. Intent classification (emergency vs. informational vs. navigational) determines the response style and urgency level.
+
+
+
+2.10 Geo-Fencing Architecture
+
+Geo-fencing is implemented as a combination of server-side zone definition and client-side boundary evaluation. Authorities draw polygon zones on the Mapbox dashboard using draw tools (Mapbox Draw GL). Zone definitions (GeoJSON polygons) are stored in PostgreSQL's PostGIS extension for spatial queries. The backend runs a periodic job (every 60 seconds) that cross-checks all active tourist GPS coordinates against all active geo-fence zones using PostGIS ST_Contains() queries. When a tourist enters or exits a zone, a zone-crossing event is generated, which triggers push notification to the tourist app and updates the authority dashboard. For offline tourists, the app stores cached zone definitions locally and performs on-device boundary checks using the dart_turf package.
+
+
+
+
+SECTION 3 — COMPLETE FEATURE BREAKDOWN
+
+
+
+3.1 Tourist App Features
+
+
+
+3.1.1 Authentication & Registration
+
+Purpose: Securely onboard tourists and establish their identity for the entire TravelSure ecosystem. Functionality: Phone-number based OTP authentication via Firebase Authentication. Email/password fallback. During registration, tourists provide: full name, nationality, government ID type and number (Aadhaar/Passport/Driving License), profile photo, emergency contacts (minimum 2), languages spoken, and optional medical information (blood group, allergies, conditions). Upon registration completion, the blockchain ID generation pipeline is triggered automatically. User Flow: Splash screen → Welcome screen → Login/Register selector → OTP input → Profile completion form → Medical & emergency contacts → Blockchain ID generation in progress → Home dashboard. Technical Implementation: Firebase Auth SDK for OTP. Flutter Form validation with regex. Hive for local profile caching. API call to backend registration endpoint which triggers blockchain hash generation. Future Scalability: Integration with DigiLocker API for government ID verification (National Data Sharing Policy compliant).
+
+
+
+3.1.2 Digital Tourist ID & QR Verification
+
+Purpose: Provide a tamper-proof, verifiable digital identity that works without internet for identity confirmation. Functionality: After registration, the backend generates a SHA-256 hash of the tourist's core identity data and records it on the mock blockchain. A QR code encoding the tourist's blockchain address, verification hash, and a short-form identity summary is generated and stored on the backend. The tourist app downloads and caches this QR. For verification, any authority with the dashboard or scanning app can scan the QR — the backend validates the hash against the blockchain record and returns the full tourist profile. User Flow: Registration complete → QR generated (shown as animated loading) → QR card displayed in 'My ID' screen → Tourist can show QR offline → Authority scans → Verified identity shown with green checkmark. Technical Implementation: qr_flutter package for QR rendering. Backend generates QR data string as base64-encoded JSON (tourist_id + blockchain_hash + timestamp). Offline verification: the QR encodes enough data for partial offline validation. Full verification requires internet.
+
+
+
+3.1.3 SOS Emergency System
+
+Purpose: Ensure that a distress signal reaches emergency services through any available channel, without exception. Functionality: The SOS screen is accessible from a persistent floating action button on every screen in the app. A 3-second press-and-hold activation (prevents accidental triggers) initiates the cascade. The SOS lifecycle: GPS fix obtained → SOS payload created → Layer 1 (internet) attempted → if success, dashboard alerted → if fail, Layer 2 (SMS) attempted → simultaneously Layer 3 (Wi-Fi Direct) and Layer 4 (BLE) broadcast initiated → Layer 5 (audio) if all else fails. A countdown timer shows the tourist that help is being reached. Cancel button available during the 3-second activation window only. Once active, SOS cannot be cancelled without entering a 4-digit security code (prevents authorities from being deceived by criminals forcing tourists to cancel). User Flow: Any screen → Long-press SOS button → 3-second activation animation → SOS active screen with layer status indicators → Estimated response time shown → SOS confirmed screen when acknowledged. Technical Implementation: flutter_sms package for SMS. flutter_blue_plus for BLE advertising. nearby_connections for Wi-Fi Direct. flutter_ringtone_player for audio signal.
+
+
+
+3.1.4 Background GPS Tracking
+
+Purpose: Maintain continuous location awareness even when the tourist is using other apps or the screen is off. Functionality: GPS tracking activates when the tourist sets their status to 'Active Tour.' The app polls GPS every 30 seconds in normal mode and every 10 seconds in high-risk zones (detected by geo-fence). Location events are first written to local Hive store, then synced to backend. Battery optimization: adaptive polling interval based on movement detection (if stationary for 5+ minutes, reduce to 2-minute poll). Significant motion detection (using accelerometer) can trigger GPS re-poll immediately. Technical Implementation: flutter_background_service for background execution. geolocator package for GPS. Battery optimization using battery_plus for adaptive behavior. WorkManager for reliable background scheduling. Local Hive box as circular buffer for last 500 location records.
+
+
+
+3.1.5 Geo-Fencing Alerts
+
+Purpose: Proactively warn tourists when they enter or approach zones with elevated risk. Functionality: The app maintains a local cache of active geo-fence zone definitions. On each GPS update, the app checks whether the current position falls within any zone boundary (using dart_turf point-in-polygon). Three zone types exist: Warning Zones (yellow alert, advisory), Restricted Zones (orange alert, strong advisory to exit), and Exclusion Zones (red alert, immediate danger, SOS suggested). Zone alerts are shown as full-screen interrupting overlays that require acknowledgment. Zones can carry metadata: reason for restriction, recommended alternative routes, emergency contact for that zone. Technical Implementation: dart_turf for spatial calculations. FlutterLocalNotificationsPlugin for background zone alerts. Zone data synced on app launch and refreshed every 30 minutes or on significant location change.
+
+
+
+3.1.6 Itinerary Management
+
+Purpose: Allow tourists to pre-plan routes so that the system can proactively monitor their journey and detect deviations. Functionality: Tourists can build day-by-day itineraries by adding destination nodes (search by name or drop pin on map). The backend geo-processes the itinerary to pre-identify any geo-fenced zones along the planned route and alerts the tourist before departure. During the tour, the system monitors whether the tourist is on-route. If the tourist deviates significantly (500m threshold) from their planned route for more than 10 minutes, a soft alert is generated. Emergency contacts can be granted view access to the itinerary for peace of mind. Technical Implementation: Mapbox Directions API for route calculation. Backend PostGIS route-vs-zone intersection analysis. flutter_map for interactive itinerary display. Shared itinerary link generation via dynamic links.
+
+
+
+3.1.7 AI Safety Assistant
+
+Purpose: Provide intelligent, contextual safety guidance that works without internet connectivity. Functionality: The AI assistant is accessible via a chat-like interface and is positioned as an emergency and safety advisor — not a general chatbot. Pre-loaded knowledge base includes: regional hazard information, emergency contact numbers by state/district, first aid procedures (CPR, snake bite, drowning, altitude sickness, heat stroke), wildlife encounter protocols, and navigation guidance for common tourist circuits. The assistant is context-aware: it knows the tourist's current GPS location, active geo-fence status, and recent SOS history. For internet-available scenarios, the assistant can query live weather APIs and emergency news feeds. For offline scenarios, it operates entirely on the local model. User interaction modes: text input, voice input (speech_to_text package), and pre-built quick-action buttons ('I need first aid', 'I'm lost', 'Wildlife nearby', 'Medical emergency'). Technical Implementation: Ollama local model integration via HTTP to localhost:11434. Fallback: Anthropic Claude API when online. Prompt template system with safety-scoped system prompts.
+
+
+
+3.1.8 Offline Emergency Communication (BLE + Wi-Fi Direct)
+
+Purpose: Create a peer-to-peer mesh network among TravelSure users to relay SOS signals in zero-internet environments. Functionality: All active TravelSure users act as potential relay nodes. BLE advertising is always active in the background (minimal battery impact using BLE 5.0 advertising-only mode). When a SOS is received via BLE, the receiving device checks its own internet connectivity. If connected, it relays the SOS to the backend on behalf of the originating tourist. If not connected, it re-advertises the SOS with a hop counter incremented. Maximum 5 hops to prevent broadcast storms. Wi-Fi Direct operates similarly using the Nearby Connections API. Technical Implementation: flutter_blue_plus for BLE. nearby_connections for Wi-Fi Direct. Protobuf-encoded compact SOS payload (< 31 bytes for BLE advertising data). Hop deduplication using LRU cache of recently seen SOS IDs.
+
+
+
+3.2 Authority Dashboard Features
+
+
+
+3.2.1 Real-Time Monitoring Dashboard
+
+The main dashboard screen is a split-layout design: full-width interactive Mapbox map occupying 60% of the screen, with a collapsible right panel showing active alerts, tourist clusters, and weather status. The map shows all active tourists as color-coded dots (green = safe, yellow = in warning zone, orange = in restricted zone, red = SOS active). Authorities can click any tourist dot to view their profile, real-time GPS trail, blockchain-verified identity, and itinerary. The map auto-centers on new SOS events. Technical Implementation: Mapbox GL JS with custom layers for tourist positions (GeoJSON point feature collection updated via WebSocket). React state updated on every GPS socket event. Virtualized tourist list (react-window) for performance with 1,000+ concurrent tourists.
+
+
+
+3.2.2 Geo-Fenced Zone Management
+
+Authorities can create, edit, activate, deactivate, and delete geo-fence zones directly from the dashboard. Zone creation uses Mapbox Draw GL for polygon, circle, and rectangle drawing. Each zone requires: name, type (warning/restricted/exclusion), activation time window (optional, e.g., monsoon season only), metadata (reason, advisory text), and assigned authority (which department manages this zone). Zone activations trigger automatic push notifications to all tourists currently inside or approaching the zone boundary (within 500m). Weather-triggered automatic zone activation: authorities can configure a zone to auto-activate when a weather threshold is crossed (e.g., river level > X, wind speed > Y).
+
+
+
+3.2.3 Emergency Response Coordination
+
+When an SOS is received, the dashboard creates an Emergency Incident Card. The card shows: tourist identity (blockchain-verified), real-time GPS, SOS channel used, time elapsed since SOS, and a response status tracker (Received → Acknowledged → Responding → Resolved). Authorities can assign responders to incidents, log response actions, and close incidents with resolution notes. The system integrates with existing police dispatch protocols by providing a formatted incident report printable as PDF. Escalation logic: if an SOS is not acknowledged within 5 minutes, it escalates to the next authority tier (local police → district control room → state emergency services).
+
+
+
+3.2.4 Analytics & Statistics
+
+The analytics module provides: daily/weekly/monthly active tourist counts, SOS frequency by zone and time, average response times, geo-fence breach statistics, tourist nationality breakdown, and route popularity heatmaps. All charts are built with Recharts. Data exports available as CSV and PDF. Designed to help tourism authorities make evidence-based decisions about zone management, staffing, and infrastructure investment. Future capability: predictive analytics using historical SOS data to forecast high-risk periods and locations.
+
+
+
+
+SECTION 4 — UI/UX PLAYBOOK
+
+
+
+4.1 Design Philosophy
+
+TravelSure's UI design philosophy is built around three principles: Clarity Under Stress (in an emergency, the UI must be instantly actionable — no cognitive load, no hidden menus), Trust Through Professionalism (a safety app must look as reliable as it is — glassmorphism accents, clean typography, government-grade credibility), and Accessibility First (the app serves tourists of all ages, languages, and digital literacy levels — touch targets are generous, text is legible, and critical actions are always one tap away).
+
+
+
+4.2 Color Palette
+
+Token
+
+Hex
+
+Usage
+
+primary-navy
+
+#1A3C5E
+
+Primary brand, headers, primary buttons
+
+safety-teal
+
+#0D7A8C
+
+Secondary actions, online status, safe zone
+
+alert-red
+
+#D32F2F
+
+SOS button, danger zones, critical alerts
+
+warning-amber
+
+#F0A500
+
+Warning zones, cautionary alerts
+
+success-green
+
+#2E7D32
+
+Confirmed safe, SOS resolved, verified ID
+
+off-white
+
+#F5F7FA
+
+App background, card surfaces
+
+glass-white
+
+rgba(255,255,255,0.15)
+
+Glassmorphism card surfaces
+
+dark-text
+
+#1C2B3A
+
+Primary body text
+
+muted-text
+
+#607080
+
+Secondary labels, metadata
+
+
+
+4.3 Typography
+
+Element
+
+Specification
+
+App Title / Hero
+
+Inter Black, 28sp, Navy
+
+Screen Title (H1)
+
+Inter Bold, 22sp, Navy
+
+Section Header (H2)
+
+Inter SemiBold, 18sp, Teal
+
+Card Title
+
+Inter Medium, 16sp, Dark Text
+
+Body Text
+
+Inter Regular, 14sp, Dark Text
+
+Caption / Label
+
+Inter Regular, 12sp, Muted Text
+
+Button Text
+
+Inter Bold, 14sp, White
+
+Emergency Text
+
+Inter Black, 18sp, Alert Red, Letter-spacing +0.5
+
+
+
+4.4 Emergency UI Design Principles
+
+SOS Button Visibility: The SOS FAB is always present on every screen during active tour mode. It uses the alert-red color with a pulsing animation to indicate active status. Size: 64dp minimum touch target.
+
+Emergency State: When SOS is active, the entire app UI shifts to an emergency theme — red header, simplified layout showing only the SOS status and relay layers, large text for readability under stress.
+
+Offline State Indicator: A persistent top banner (amber, 32dp height) appears whenever the app detects lost internet connectivity. It clearly states 'OFFLINE — Emergency relay active' to reassure users their SOS capability persists.
+
+Layer Status Indicators: During SOS, each communication layer (Internet, SMS, Wi-Fi Direct, BLE, Audio) is shown as a status row with animated indicators — attempting (pulsing), success (green checkmark), failed (red X).
+
+
+
+4.5 Tourist App Screen Breakdown
+
+Screen
+
+Key UI Elements
+
+Design Notes
+
+Splash
+
+Logo animation, loading indicator
+
+3-second brand moment, preloads local AI model
+
+Welcome / Onboarding
+
+3-card swipeable overview, CTA button
+
+Highlight 3 core features: Safety, AI, Offline
+
+Registration
+
+Multi-step form wizard, progress bar
+
+Step-by-step to reduce overwhelm
+
+Blockchain ID Generation
+
+Animated hash generation visual, loading
+
+Show tech credibility, builds trust
+
+My Digital ID
+
+Large QR code, tourist photo, name, ID hash
+
+Clean card design, shareable
+
+Home Dashboard
+
+Safety score ring, SOS FAB, quick actions
+
+At-a-glance safety status
+
+Live Map
+
+Tourist location, geo-fence overlays, POIs
+
+Mapbox with custom markers
+
+AI Assistant
+
+Chat bubbles, quick-action chips, voice input
+
+Dark theme during offline mode
+
+SOS Active
+
+Layer status, countdown, cancel code
+
+Maximum contrast, full-screen
+
+Itinerary Builder
+
+Map + waypoint list, route line
+
+Drag-and-drop waypoint reorder
+
+Settings / Privacy
+
+Toggle controls, permission status
+
+Transparent data usage explanations
+
+
+
+4.6 Authority Dashboard UX
+
+The authority dashboard uses a three-panel layout: Left sidebar (navigation: Dashboard, Alerts, Map, Tourists, Geo-fences, Analytics, Settings), Center panel (main content area, map or list), Right panel (context panel — incident details, tourist profile, or analytics breakdown). The map occupies the full center panel in the default view. The right panel slides in when an alert or tourist is selected. Dark mode is offered as an option for night-shift operators — the map-heavy interface benefits from reduced eye strain in low-light environments. All alert cards use color-coded left borders (red for SOS, amber for geo-fence breach, blue for weather alert) for instant visual triage.
+
+
+
+4.7 Glassmorphism Usage
+
+Glassmorphism is used selectively in TravelSure to reinforce the high-tech, trustworthy brand aesthetic without compromising readability or accessibility. Usage contexts: tourist ID card background (frosted glass effect over map background), AI assistant chat window header, dashboard stat cards in overview panels. Implementation: backdrop-filter: blur(12px), background: rgba(255,255,255,0.12), border: 1px solid rgba(255,255,255,0.2), box-shadow: 0 8px 32px rgba(0,0,0,0.1). Critical rule: glassmorphism is never used on text-heavy components or interactive elements where contrast is needed for accessibility.
+
+
+
+
+SECTION 5 — FIGMA DESIGN PLAYBOOK
+
+
+
+5.1 Figma File Organization
+
+Figma Page
+
+Contents
+
+🎨 Design System
+
+Color styles, text styles, effect styles, component library
+
+📱 Tourist App — Flows
+
+All tourist app screens with flow connectors
+
+🖥️ Authority Dashboard — Flows
+
+All dashboard screens with interaction flows
+
+🧩 Components
+
+All reusable component variants (cards, buttons, inputs, alerts)
+
+📐 Wireframes
+
+Low-fidelity wireframes for initial structure planning
+
+🔄 Prototypes
+
+Linked prototype flows for SOS cascade and ID verification
+
+📊 Assets & Icons
+
+All custom icons, illustrations, and exported assets
+
+
+
+5.2 Design Token System
+
+All design decisions are stored as Figma Styles and Variables. Color styles are organized into groups: Brand/, Surface/, Text/, Alert/, Status/. Text styles: Heading/, Body/, Caption/, Button/. Effect styles: Shadow/Card, Shadow/Float, Blur/Glass. Spacing follows an 8-point grid (4, 8, 12, 16, 24, 32, 48, 64, 96). Corner radius tokens: sm (4px), md (8px), lg (16px), xl (24px), pill (100px).
+
+
+
+5.3 Component Organization
+
+Atoms: Button (primary/secondary/danger/ghost variants), Input (text/search/OTP), Badge (status/zone/priority), Icon (custom SVG set of 40+ safety icons), Avatar (with online/offline indicator ring)
+
+Molecules: Alert Card (title + description + action + color variant), Tourist Marker (map dot with status ring), Zone Overlay (polygon with label + type color), AI Message Bubble (user/assistant variants), Layer Status Row (for SOS screen)
+
+Organisms: Tourist ID Card (full QR + photo + info), SOS Activation Screen, Dashboard Stat Bar, Map Control Panel, Alert Feed Column, Emergency Incident Card
+
+Templates: App Shell (nav bar + SOS FAB + header), Dashboard Shell (sidebar + center + right panel), Map View Template
+
+
+
+5.4 Auto-Layout Strategy
+
+Every component uses Auto Layout for responsive behavior. Vertical stacks for list items and form fields. Horizontal stacks with space-between for card headers. Nested auto-layout for complex cards (header + content + footer). All spacing uses gap from the 8pt grid. Constraints are set on all frames: tourist app screens are fixed at 390x844px (iPhone 14 Pro dimensions). Dashboard screens use a 1440px wide frame with 12-column grid (72px columns, 24px gutters, 64px margins).
+
+
+
+5.5 Mobile Frame & Responsive Setup
+
+Tourist app designs use iPhone 14 Pro frame (390x844) as the design frame with Android preview exported at 360x800. Status bar, home indicator, and safe areas are respected using Figma's iOS/Android frame presets. All interactive elements maintain minimum 44x44px touch target (Apple HIG) / 48x48dp (Material You). Dashboard designs use 1440px wide for desktop, with responsive breakpoints previewed at 1280px and 1024px for tablet/authority-tablet use cases.
+
+
+
+
+SECTION 6 — FLUTTER DEVELOPMENT PLAYBOOK
+
+
+
+6.1 Recommended Folder Structure
+
+The Flutter project follows a feature-first folder structure that isolates each domain's code for scalability and team collaboration.
+
+lib/
+  core/         — shared utilities, constants, theme, DI
+  features/
+    auth/       — login, registration, OTP screens & logic
+    tracking/   — GPS service, location models, background task
+    sos/        — SOS manager, BLE service, SMS service, Wi-Fi Direct
+    geofence/   — zone cache, boundary checker, alert service
+    ai/         — Ollama client, prompt templates, chat UI
+    blockchain/ — ID generation, QR display, verification API
+    dashboard/  — tourist home, safety score, itinerary
+    authority/  — authority-facing screens (if mobile auth app)
+  shared/       — reusable widgets, models, extensions
+  main.dart
+
+
+
+6.2 State Management — Riverpod
+
+Riverpod is recommended over Bloc for this project because TravelSure's state is highly reactive (GPS streams, BLE events, connectivity changes) and Riverpod's provider composition model handles async streams more elegantly than Bloc's event-based approach. Key providers: locationStreamProvider (real-time GPS stream), sosStateProvider (SOS lifecycle state machine), geofenceZonesProvider (cached zone list with refresh trigger), connectivityProvider (online/offline state), aiAssistantProvider (Ollama client state), blockchainIdProvider (tourist's cached digital ID).
+
+
+
+6.3 Navigation — GoRouter
+
+GoRouter is used for declarative routing with deep link support (critical for emergency contact links and authority verification links). Route guards protect authenticated routes. ShellRoute wraps the main app navigation with the persistent bottom nav bar and SOS FAB. The SOS screen is a full-screen route that can be pushed from anywhere in the app using the GoRouter global key.
+
+
+
+6.4 Key Package List
+
+Package
+
+Version
+
+Purpose
+
+Assigned To
+
+geolocator
+
+^11.0.0
+
+GPS positioning
+
+Rishi
+
+flutter_background_service
+
+^5.0.0
+
+Background GPS task
+
+Rishi
+
+flutter_blue_plus
+
+^1.31.0
+
+BLE advertising & scan
+
+Ajinkya
+
+nearby_connections
+
+^4.0.0
+
+Wi-Fi Direct SOS relay
+
+Ajinkya
+
+flutter_sms
+
+^2.3.0
+
+SMS SOS fallback
+
+Ajinkya
+
+riverpod / flutter_riverpod
+
+^2.5.0
+
+State management
+
+All
+
+go_router
+
+^13.0.0
+
+Navigation
+
+Abhijeet
+
+dio
+
+^5.4.0
+
+HTTP client
+
+Ajaya
+
+socket_io_client
+
+^2.0.3
+
+WebSocket real-time
+
+Ajaya
+
+hive_flutter
+
+^1.1.0
+
+Local offline storage
+
+Rishi
+
+qr_flutter
+
+^4.1.0
+
+QR code display
+
+Ajinkya
+
+mapbox_maps_flutter
+
+^2.0.0
+
+Maps integration
+
+Abhijeet
+
+dart_turf
+
+^0.0.11
+
+Geo-fence calculations
+
+Rishi
+
+speech_to_text
+
+^6.6.0
+
+AI voice input
+
+Abhijeet
+
+connectivity_plus
+
+^6.0.0
+
+Connectivity monitor
+
+Rishi
+
+flutter_local_notifications
+
+^17.0.0
+
+Zone alerts & SOS notifs
+
+Abhijeet
+
+workmanager
+
+^0.5.2
+
+Background scheduling
+
+Rishi
+
+crypto
+
+^3.0.3
+
+SHA-256 ID hashing
+
+Ajinkya
+
+
+
+6.5 Background Task Strategy
+
+Two background tasks run continuously during an active tour: the GPS Tracking Task (polls geolocator every 30s, writes to Hive, triggers zone checks, queues sync if offline) and the SOS Monitor Task (listens for BLE SOS beacons from nearby tourists, relays if the device has internet, maintains BLE advertising for the device's own SOS capability). Both tasks are registered with WorkManager on Android and BGTaskScheduler on iOS. The tasks are lightweight (< 5ms execution per cycle) and use battery-optimized polling intervals. Critical: on iOS, background GPS requires 'Always On' location permission, which must be explicitly requested and explained to the user with a clear justification screen.
+
+
+
+6.6 Offline Storage Schema (Hive)
+
+Hive Box
+
+Data Stored
+
+Retention Policy
+
+locationHistory
+
+GPS coordinates + timestamp + accuracy + connectivity state
+
+Last 500 records, circular buffer
+
+pendingSyncQueue
+
+Queued API calls (SOS events, GPS batches) awaiting reconnection
+
+Until successfully synced, max 200 items
+
+geoFenceZones
+
+Cached zone GeoJSON + metadata
+
+Refreshed on app launch and every 4 hours
+
+touristProfile
+
+Own profile data, emergency contacts, medical info
+
+Permanent, encrypted with flutter_secure_storage key
+
+blockchainId
+
+QR code data, hash, generation timestamp
+
+Permanent
+
+aiKnowledgeBase
+
+Embedded safety info, regional hazards, first-aid procedures
+
+Updated weekly via background sync
+
+
+
+6.7 Security Considerations
+
+GPS and medical data stored in Hive are encrypted using a key derived from the user's authentication token stored in flutter_secure_storage (hardware-backed on Android, Secure Enclave on iOS).
+
+BLE SOS payloads include a HMAC signature computed from the tourist's private key to prevent spoofed SOS broadcasts from non-TravelSure devices.
+
+API calls include JWT Bearer tokens in headers. Tokens are refreshed silently using firebase_auth's token refresh mechanism.
+
+The blockchain verification QR encodes a signed payload — the signature is verified server-side before returning tourist data to an authority scanner.
+
+
+
+
+SECTION 7 — REACT DASHBOARD PLAYBOOK
+
+
+
+7.1 Dashboard Architecture
+
+The authority dashboard is a React 18 SPA built with Vite. The architecture separates concerns into: Pages (route-level components), Features (domain-specific modules: Map, Alerts, GeoFences, Analytics, Tourists), Components (reusable UI elements), Hooks (custom hooks for WebSocket, API calls, map interactions), Services (API client, socket client, map service), Store (Zustand for global state — alert feed, tourist positions, geo-fence definitions), and Utils (geo calculations, date formatting, alert prioritization).
+
+
+
+7.2 Key Library Stack
+
+Library
+
+Purpose
+
+React 18 + Vite
+
+Core framework + ultra-fast dev server
+
+React Router v6
+
+Client-side routing with nested layouts
+
+Zustand
+
+Lightweight global state (tourist positions, alert feed)
+
+Mapbox GL JS + Mapbox Draw
+
+Interactive map with polygon drawing for geo-fences
+
+Socket.IO Client
+
+Real-time WebSocket connection for live updates
+
+React Query (TanStack)
+
+Server state management, caching, background refetch
+
+Recharts
+
+Alert statistics, tourist analytics, heatmaps
+
+React Table (TanStack)
+
+Virtualized tourist and alert lists
+
+Tailwind CSS
+
+Utility-first styling for rapid development
+
+Shadcn/UI
+
+Accessible component primitives (dialogs, dropdowns)
+
+date-fns
+
+Date/time formatting and manipulation
+
+React PDF
+
+Exportable incident reports as PDF
+
+
+
+7.3 Real-Time WebSocket Architecture
+
+The dashboard maintains a persistent WebSocket connection to the backend's Socket.IO server. The connection subscribes to the authority's assigned region events on connect. Event types received: tourist:location (GPS update for a specific tourist — updates map marker position), alert:new (new SOS or geo-fence alert — adds to alert feed), alert:updated (status change on an existing alert), zone:activated (a geo-fence zone was activated or deactivated). The Zustand store serves as the real-time state buffer. Map layers are updated via imperative Mapbox API calls from useEffect hooks watching the relevant Zustand slices. A custom useWebSocket hook manages connection lifecycle, automatic reconnection (exponential backoff), and event subscription cleanup.
+
+
+
+7.4 Alert Management Architecture
+
+Alerts are managed as a priority queue in the Zustand store. Priority levels: P0 (SOS Active — always at top), P1 (Geo-fence Exclusion breach), P2 (Geo-fence Restricted breach), P3 (Weather alert), P4 (Informational). The alert feed component uses react-window for virtualized rendering to handle 500+ simultaneous alerts without performance degradation. Each alert card has a contextual actions menu: Acknowledge, Assign Responder, View Tourist Profile, Escalate, Close. Alert sound notifications use the Web Audio API — a distinct alert sound plays for P0 events even when the browser tab is not focused (requires notification permission).
+
+
+
+7.5 Map Integration Details
+
+The Mapbox map has five custom layers: (1) tourist-positions layer — GeoJSON FeatureCollection updated on each WebSocket location event, rendered as custom SVG markers with status-color rings; (2) tourist-trails layer — LineString per tourist showing last 10 GPS points; (3) geo-fence-zones layer — Polygon features from PostGIS, colored by zone type; (4) police-stations layer — static point layer from pre-loaded authority data; (5) weather-overlay layer — tile overlay from OpenWeatherMap precipitation tiles. Map controls include: search (place name to center map), layer toggles, time slider (replay historical tourist movement), and the geo-fence drawing toolbar (Mapbox Draw GL).
+
+
+
+
+SECTION 8 — BACKEND PLAYBOOK
+
+
+
+8.1 Backend Architecture Overview
+
+The backend is built as a Flask (Python) application with a modular blueprint structure, or alternatively Node.js (Express) if the team prefers JavaScript across the stack. For SIH demo, a monorepo with modular route blueprints is sufficient. For production, the same structure maps cleanly to microservices. Core blueprints: /auth (registration, login, token refresh), /tourists (profile CRUD, ID management), /tracking (GPS event ingestion, history queries), /emergency (SOS CRUD, alert routing, escalation), /geofence (zone CRUD, spatial queries, broadcast), /blockchain (ID generation, verification, hash management), /ai (proxy to local Ollama or cloud AI), /notifications (FCM, SMS dispatch), /analytics (aggregated statistics queries), /dashboard (WebSocket event bridge).
+
+
+
+8.2 Authentication System
+
+Tourists authenticate via Firebase Authentication (phone OTP). The Flutter app gets a Firebase ID token and exchanges it for a TravelSure JWT (short-lived, 1 hour) from the /auth/exchange endpoint. The JWT carries: tourist_id, role (tourist/authority), region_code, and permissions scope. Authorities authenticate via email/password with Firebase Auth or a separate admin authentication system. All protected endpoints require a valid JWT in the Authorization: Bearer header. Token refresh happens silently in the Flutter app using firebase_auth's built-in refresh mechanism.
+
+
+
+8.3 Key API Endpoints
+
+Endpoint
+
+Method
+
+Auth
+
+Description
+
+POST /auth/register
+
+POST
+
+None
+
+Tourist registration + triggers blockchain ID generation
+
+POST /auth/exchange
+
+POST
+
+Firebase Token
+
+Exchange Firebase token for TravelSure JWT
+
+POST /tracking/location
+
+POST
+
+JWT
+
+Ingest GPS event. Queues for geo-fence check.
+
+GET /tracking/history/:id
+
+GET
+
+JWT (Auth)
+
+Get GPS history for a tourist
+
+POST /emergency/sos
+
+POST
+
+JWT
+
+Create SOS event. Triggers alert cascade.
+
+PATCH /emergency/sos/:id
+
+PATCH
+
+JWT (Auth)
+
+Update SOS status (acknowledge/resolve)
+
+GET /geofence/zones
+
+GET
+
+JWT
+
+Get all active zones for tourist's region
+
+POST /geofence/zones
+
+POST
+
+JWT (Auth)
+
+Create a new geo-fence zone
+
+GET /blockchain/verify/:qr_hash
+
+GET
+
+JWT (Auth)
+
+Verify tourist identity from QR hash
+
+POST /ai/chat
+
+POST
+
+JWT
+
+Proxy chat to Ollama or cloud AI with safety context
+
+GET /analytics/summary
+
+GET
+
+JWT (Auth)
+
+Get dashboard analytics summary
+
+GET /tourists/cluster
+
+GET
+
+JWT (Auth)
+
+Get tourist cluster positions by region
+
+
+
+8.4 Emergency Handling Pipeline
+
+When POST /emergency/sos is received, the following pipeline executes synchronously (with async side effects): (1) SOS record created in PostgreSQL with status=ACTIVE. (2) Tourist's latest GPS coordinates fetched. (3) Nearest police station computed using PostGIS ST_Distance. (4) Alert event emitted via Socket.IO to all authority dashboards subscribed to the tourist's region. (5) Async: FCM push notification sent to tourist's emergency contacts. (6) Async: SMS dispatched to emergency contacts and regional emergency number via Twilio/MSG91. (7) Escalation timer set: if SOS not acknowledged in 300 seconds, escalation event fires to next tier. The entire synchronous pipeline completes in < 200ms. Async operations are queued via Celery (Python) or Bull (Node.js) to prevent API response latency.
+
+
+
+8.5 Scalability & Deployment
+
+For SIH demo: single Heroku/Railway dyno or Render.com deployment with PostgreSQL add-on and Firebase free tier. For production scaling: containerize each blueprint as a Docker service, deploy on Kubernetes (GKE or AWS EKS). Use Redis for Socket.IO session store (required for horizontal scaling). PostgreSQL read replicas for analytics queries. CDN for static assets. PostGIS for all spatial operations. The architecture supports 100,000+ concurrent tourists with horizontal backend scaling — relevant for national deployment during festival seasons (Char Dham Yatra, Kumbh Mela) when tourist density spikes.
+
+
+
+
+SECTION 9 — DATABASE DESIGN
+
+
+
+9.1 Core Entity Relationships
+
+The TravelSure database is organized around six core entities: Tourist (the registered user), Authority (police/tourism official), Location Event (GPS ping), Emergency Alert (SOS event), Geo Fence Zone (danger zone definition), and Blockchain Record (immutable identity hash). Key relationships: Tourist has many Location Events (1:N). Tourist has zero or one Blockchain Record (1:1). Emergency Alert belongs to one Tourist, and can have many Response Actions (1:N). Geo Fence Zone has many Zone Crossing Events (1:N). Authority manages many Geo Fence Zones (1:N) and can own many Emergency Responses (1:N).
+
+
+
+9.2 Table Schemas
+
+tourists
+
+Column
+
+Type
+
+Notes
+
+id
+
+UUID (PK)
+
+Auto-generated on registration
+
+phone_number
+
+VARCHAR(15) UNIQUE
+
+Primary auth identifier
+
+full_name
+
+VARCHAR(255)
+
+
+
+nationality
+
+VARCHAR(100)
+
+
+
+id_document_type
+
+ENUM('aadhaar','passport','dl')
+
+
+
+id_document_hash
+
+VARCHAR(64)
+
+SHA-256 hash of document number (never store raw)
+
+profile_photo_url
+
+TEXT
+
+Cloud storage URL
+
+blood_group
+
+VARCHAR(5)
+
+Medical emergency data
+
+medical_conditions
+
+TEXT[]
+
+Array of conditions
+
+emergency_contacts
+
+JSONB
+
+[{name, phone, relation}]
+
+languages
+
+TEXT[]
+
+For multilingual AI assistant
+
+region_code
+
+VARCHAR(10)
+
+Current or home region
+
+is_active
+
+BOOLEAN
+
+Active tour flag
+
+created_at
+
+TIMESTAMP
+
+
+
+
+
+location_events
+
+Column
+
+Type
+
+Notes
+
+id
+
+BIGSERIAL (PK)
+
+High volume — integer PK for performance
+
+tourist_id
+
+UUID (FK)
+
+References tourists.id
+
+latitude
+
+DECIMAL(9,6)
+
+
+
+longitude
+
+DECIMAL(9,6)
+
+
+
+accuracy_meters
+
+REAL
+
+GPS accuracy in meters
+
+altitude_meters
+
+REAL
+
+
+
+speed_kmh
+
+REAL
+
+
+
+connectivity_state
+
+ENUM('online','offline')
+
+Was device online when recorded?
+
+recorded_at
+
+TIMESTAMP
+
+Device timestamp
+
+synced_at
+
+TIMESTAMP
+
+Server receipt timestamp
+
+geom
+
+GEOMETRY(POINT, 4326)
+
+PostGIS geometry for spatial queries
+
+
+
+emergency_alerts
+
+Column
+
+Type
+
+Notes
+
+id
+
+UUID (PK)
+
+
+
+tourist_id
+
+UUID (FK)
+
+References tourists.id
+
+trigger_type
+
+ENUM('manual','ai_triggered','geofence','fall_detection')
+
+
+
+status
+
+ENUM('ACTIVE','ACKNOWLEDGED','RESPONDING','RESOLVED','FALSE_ALARM')
+
+
+
+latitude
+
+DECIMAL(9,6)
+
+Location at SOS time
+
+longitude
+
+DECIMAL(9,6)
+
+
+
+channel_used
+
+ENUM('internet','sms','wifi_direct','ble','audio')
+
+Primary channel that succeeded
+
+channels_attempted
+
+TEXT[]
+
+All channels tried
+
+priority_level
+
+SMALLINT
+
+0=P0 (highest), 4=P4
+
+assigned_authority_id
+
+UUID (FK)
+
+Responding authority
+
+acknowledged_at
+
+TIMESTAMP
+
+NULL until acknowledged
+
+resolved_at
+
+TIMESTAMP
+
+NULL until closed
+
+resolution_notes
+
+TEXT
+
+
+
+created_at
+
+TIMESTAMP
+
+
+
+
+
+geo_fence_zones
+
+Column
+
+Type
+
+Notes
+
+id
+
+UUID (PK)
+
+
+
+name
+
+VARCHAR(255)
+
+
+
+zone_type
+
+ENUM('warning','restricted','exclusion')
+
+
+
+polygon_geojson
+
+JSONB
+
+GeoJSON Polygon definition
+
+geom
+
+GEOMETRY(POLYGON, 4326)
+
+PostGIS for ST_Contains queries
+
+authority_id
+
+UUID (FK)
+
+Managing authority
+
+advisory_text
+
+TEXT
+
+Shown to tourist in alert
+
+is_active
+
+BOOLEAN
+
+Active/inactive
+
+activation_start
+
+TIMESTAMP
+
+Optional scheduled activation
+
+activation_end
+
+TIMESTAMP
+
+Optional scheduled deactivation
+
+weather_trigger
+
+JSONB
+
+e.g. {parameter:'river_level', threshold:5.0}
+
+created_at
+
+TIMESTAMP
+
+
+
+
+
+blockchain_records
+
+Column
+
+Type
+
+Notes
+
+id
+
+UUID (PK)
+
+
+
+tourist_id
+
+UUID (FK)
+
+References tourists.id — UNIQUE
+
+block_hash
+
+VARCHAR(64)
+
+SHA-256 hash of identity payload
+
+previous_hash
+
+VARCHAR(64)
+
+Links to previous block in chain
+
+identity_payload_hash
+
+VARCHAR(64)
+
+Hash of the full identity JSON
+
+qr_data
+
+TEXT
+
+Base64-encoded QR payload
+
+issued_at
+
+TIMESTAMP
+
+
+
+chain_height
+
+BIGINT
+
+Block number in chain
+
+is_revoked
+
+BOOLEAN
+
+For fraud/report cases
+
+
+
+
+SECTION 10 — BLOCKCHAIN IMPLEMENTATION
+
+
+
+10.1 Why Blockchain for Tourist ID?
+
+Blockchain is used in TravelSure for one specific, well-justified purpose: tamper-proof identity anchoring. Traditional centralized databases are vulnerable to modification, corruption, and administrative fraud. A tourist's digital ID must be verifiable by any authority anywhere — even one with no direct relationship to the issuing organization — and must guarantee that the identity data has not been altered since issuance. Blockchain's immutability property (each block's hash depends on all previous blocks) makes retroactive tampering computationally detectable. This is not about cryptocurrency or smart contracts — it is about establishing a verifiable, decentralized chain of trust for identity records.
+
+
+
+10.2 Digital ID Generation Process
+
+Tourist completes registration. Backend collects: full_name, id_document_type, id_document_hash (SHA-256 of document number), phone_hash (SHA-256 of phone), registration_timestamp, region_code, emergency_contacts_hash.
+
+Backend assembles an identity_payload JSON string from these fields in a canonical, alphabetically-sorted key order (to ensure identical JSON produces identical hash regardless of serialization order).
+
+Backend computes: identity_hash = SHA256(identity_payload_json_string). This is the root fingerprint of the tourist's identity.
+
+Backend retrieves the latest block's hash from the blockchain_records table (previous_hash). On the first registration, previous_hash = '0000000000000000' (genesis constant).
+
+Backend computes: block_hash = SHA256(identity_hash + previous_hash + issued_at_timestamp). This cryptographically links the new block to the chain.
+
+Backend inserts the new blockchain_record row and generates the QR payload: base64(JSON({tourist_id, block_hash, identity_hash, issued_at})).
+
+QR code image is generated server-side and stored in cloud storage. Download URL sent to tourist app, which caches it locally in Hive.
+
+
+
+10.3 Verification Workflow
+
+When an authority scans a tourist's QR code via the dashboard or a scanning tool, the following verification process executes: (1) QR payload decoded → tourist_id, block_hash, identity_hash, issued_at extracted. (2) Backend fetches blockchain_record for the tourist_id. (3) Backend recomputes block_hash using the stored identity_hash, previous_hash, and issued_at. (4) If recomputed hash == QR block_hash → identity VERIFIED. (5) Backend returns full tourist profile to authority. (6) If hashes do not match → TAMPERED flag raised, alert sent to regional authority.
+
+
+
+10.4 SIH Demo Implementation Strategy
+
+For SIH: implement the mock blockchain as described above using a PostgreSQL table with chain semantics. The demo will show: registration → hash generation animation → QR display → authority scans QR → 'IDENTITY VERIFIED' screen with tourist details. The blockchain concept is fully demonstrated without Ethereum gas fees or testnet dependencies. Judges evaluating the concept will see: immutable hash chain, QR-encoded verification, tamper detection — all functioning live.
+
+Ethereum Testnet Path (future): Deploy a simple Solidity smart contract on Sepolia testnet. The contract stores a mapping(address => bytes32) of tourist_id (as address) to identity_hash. The backend calls the contract's storeHash() function on registration and reads it on verification. This can be demonstrated in a future version using ethers.js (Node backend) or web3.py (Flask backend).
+
+
+
+
+SECTION 11 — AI ASSISTANT PLAYBOOK
+
+
+
+11.1 Offline AI Architecture
+
+The TravelSure AI assistant is an offline-first, safety-scoped AI system — not a general-purpose chatbot. The architecture has two operating modes: Offline Mode (default) where a quantized language model (Mistral 7B Q4_K_M ~4GB or Phi-2 ~1.6GB) runs locally on the device via Ollama (Linux/Mac) or a direct GGUF loader on mobile; and Online Mode where queries are routed to the Anthropic Claude API (claude-sonnet) or Gemini API via the backend proxy. The system always prefers offline mode for privacy and resilience, and falls back to online mode only for complex queries that exceed the local model's capability.
+
+
+
+11.2 Intent Classification System
+
+Before processing any user query, the assistant classifies intent into one of five categories: EMERGENCY (immediate danger — triggers SOS suggestion, first-aid guidance), NAVIGATION (route, location, directions), INFORMATION (area hazards, weather, rules), MEDICAL (symptoms, first-aid, medication), GENERAL (all other safety queries). Each intent category has a dedicated response template that shapes the AI's output: emergency responses are short, numbered, action-oriented; navigation responses include map waypoints; medical responses include step-by-step first-aid procedures.
+
+
+
+11.3 System Prompt Engineering
+
+The system prompt is the key to keeping the AI focused on safety and preventing off-topic responses. The prompt includes: (1) Role definition: 'You are an offline emergency safety assistant for TravelSure. Your ONLY function is to provide safety, first-aid, navigation, and emergency guidance. You do not discuss any topic unrelated to tourist safety.' (2) Context injection: tourist's current GPS location, nearest town, active geo-fence zones, weather conditions (if available), time of day, and tourist's medical conditions (blood group, allergies — retrieved from their profile). (3) Response format constraints: 'Always respond in numbered steps for emergency guidance. Keep responses under 150 words unless first-aid procedure requires more.' (4) Language instruction: 'Respond in the tourist's preferred language: [language from profile].' (5) Escalation instruction: 'If the user's message indicates immediate physical danger, include SOS_TRIGGER as the first word of your response.'
+
+
+
+11.4 Smart SOS Triggering
+
+The SOS_TRIGGER pattern in AI responses enables the assistant to proactively suggest or initiate SOS. If the tourist types or speaks 'I'm injured and can't move', 'there's been an accident', 'snake bite', or similar distress phrases, the intent classifier detects EMERGENCY, and the AI response begins with SOS_TRIGGER, which the Flutter app parses to display an SOS initiation prompt ('The AI assistant recommends activating SOS. Activate now?'). The tourist confirms, and the SOS cascade begins. This creates an AI-assisted SOS pathway that lowers the cognitive barrier for distressed tourists who may be unable to navigate to the SOS button.
+
+
+
+11.5 Pre-Loaded Knowledge Base
+
+The local knowledge base is a structured JSON file embedded in the app (updated monthly via silent background sync). Contents: state-wise emergency numbers (police, ambulance, forest department), 50+ common tourist hazard scenarios with guidance, first-aid procedures for 20+ conditions (snake bite, hypothermia, altitude sickness, drowning, cardiac arrest, fractures, dehydration), wildlife encounter protocols for 15+ species, regional-specific seasonal hazards (monsoon flooding, Himalayan weather patterns, desert heat), and 10 most common trekking routes with hazard markers.
+
+
+
+
+SECTION 12 — SOS SYSTEM PLAYBOOK
+
+
+
+12.1 SOS Lifecycle — Complete State Machine
+
+The SOS system operates as a formal state machine with the following states: IDLE (normal operation), ACTIVATING (3-second press-hold window), ACTIVE (cascade executing), ACKNOWLEDGED (authority confirmed receipt), RESPONDING (responder dispatched), RESOLVED (emergency closed), CANCELLED (tourist cancelled within 3-second window only), FALSE_ALARM (authority marked as false alarm after investigation). State transitions are immutable on the server — once ACKNOWLEDGED, the tourist cannot cancel the server-side alert (only the authority can close it).
+
+
+
+12.2 SOS Payload Structure
+
+SOS Payload {
+  tourist_id: UUID,
+  blockchain_id_hash: SHA256,
+  timestamp: ISO8601,
+  gps: { latitude, longitude, accuracy_m, altitude_m },
+  trigger_type: 'manual' | 'ai_triggered' | 'geofence_exclusion',
+  battery_percent: number,
+  connectivity: 'online' | 'offline',
+  last_known_location: GPS (if current fix fails),
+  emergency_contacts: [{name, phone}] (cached locally),
+  channel: 'internet' | 'sms' | 'wifi_direct' | 'ble' | 'audio',
+  hop_count: number (0 for direct, 1+ for relayed),
+  relay_tourist_id: UUID (ID of the tourist who relayed, if applicable)
+}
+
+
+
+12.3 Layer-by-Layer Implementation Detail
+
+Layer 1 — Internet (REST + WebSocket)
+
+Implementation: Dio POST to /emergency/sos with full SOS payload. Timeout: 3 seconds. On success: server creates DB record, Socket.IO emits to authority dashboard, FCM push triggered, SMS async dispatch. On failure (timeout or network error): immediately fall through to Layer 2.
+
+Layer 2 — SMS Fallback
+
+Implementation: flutter_sms sends a pre-formatted SMS to: (1) all emergency contacts stored in the tourist's profile, (2) regional emergency number (stored in app's region config). SMS format: 'TRAVELSURE EMERGENCY — [Name] needs help at GPS: [lat],[lon] — TravelSure ID: [id] — [timestamp]'. The backend has an inbound SMS webhook (Twilio) that parses this format and creates an SOS record if one doesn't already exist from Layer 1.
+
+Layer 3 — Wi-Fi Direct (Nearby Connections)
+
+Implementation: nearby_connections (Android Nearby Connections API) advertises the SOS payload as a broadcast payload. Discovery mode activated simultaneously. Any nearby TravelSure user receives the payload, checks their internet connectivity, and if online, calls /emergency/sos on behalf of the originator. The relay payload includes relay_tourist_id to identify the relay node. The originating device shows a 'Relay active — nearby user relaying your SOS' status.
+
+Layer 4 — BLE Mesh
+
+Implementation: flutter_blue_plus sets the device into BLE Advertising mode with a custom Service UUID (generated from TravelSure's app ID). The advertising payload includes a compact SOS record: tourist_id (truncated 8 bytes), lat/lon (4 bytes each, fixed-point encoded), timestamp (4 bytes Unix), hop_count (1 byte). Total payload: 21 bytes (fits within BLE 5.0 advertising data limit). Each relay node increments hop_count. Maximum hops: 5 (hardcoded) to prevent broadcast storms. LRU cache on each device prevents re-advertising already-seen SOS IDs.
+
+Layer 5 — Audio Proximity Signal
+
+Implementation: flutter_ringtone_player activates the device's maximum volume alarm tone. Additionally, the app generates a patterned audio signal using the audioplayers package: 3 short + 3 long + 3 short beeps (Morse SOS pattern), repeating every 10 seconds. Screen brightness set to maximum for visual signaling. This layer requires no other device or infrastructure — it purely signals to nearby humans.
+
+
+
+12.4 Alert Escalation Logic
+
+Time Since SOS
+
+Escalation Action
+
+T+0 (SOS Created)
+
+Alert sent to regional authority dashboard. FCM to emergency contacts. SMS dispatched.
+
+T+5 minutes (unacknowledged)
+
+Escalation event: alert pushed to district control room. Audio alert on dashboard.
+
+T+15 minutes (unacknowledged)
+
+Alert escalated to state emergency management center. Nearby police units notified via API.
+
+T+30 minutes (unacknowledged)
+
+Alert flagged for National Disaster Response Force (NDRF) integration. Email to regional tourism authority.
+
+T+any (acknowledged)
+
+Escalation timer stopped. Incident card shows responding authority identity and ETA.
+
+
+
+
+SECTION 13 — SECURITY & PRIVACY
+
+
+
+13.1 User Privacy Framework
+
+TravelSure collects sensitive data (GPS location, identity documents, medical information, emergency contacts) and handles it with strict privacy controls. The privacy framework is modeled on GDPR principles, applied to the Indian context with forward-compatibility for India's Personal Data Protection Bill. Core principles: Data Minimization (only collect data necessary for safety functions), Purpose Limitation (GPS data used only for safety and tracking, never sold or used for commercial profiling), Transparency (in-app privacy dashboard shows what data is collected and why), User Control (tourists can delete their data, pause GPS tracking, and view their full data record at any time), and Security by Default (all data encrypted at rest and in transit).
+
+
+
+13.2 Encryption Strategy
+
+Data Category
+
+Encryption Method
+
+Key Management
+
+GPS location history (local)
+
+AES-256 via Hive encryption adapter
+
+Key derived from Firebase auth UID, stored in flutter_secure_storage
+
+Medical information (local)
+
+AES-256 via Hive encryption adapter
+
+Same key as GPS
+
+API communications
+
+TLS 1.3 (enforced, no downgrade)
+
+Certificate pinning for backend domain
+
+Blockchain ID payload
+
+SHA-256 hash (one-way)
+
+Hash is public; raw data never transmitted
+
+BLE SOS payload
+
+HMAC-SHA256 signature
+
+Private key derived from tourist's Firebase UID
+
+Database at rest
+
+PostgreSQL column-level encryption for PII
+
+AWS KMS / Google Cloud KMS
+
+
+
+13.3 Permission Handling
+
+TravelSure requires the following permissions, each requested with a clear justification screen explaining exactly why the permission is needed: Location (Always) — explained as required for background GPS tracking during active tours; without this, safety monitoring stops when the screen is off. Bluetooth — explained as required for BLE mesh SOS relay. Nearby Devices — for Wi-Fi Direct SOS relay. SMS — for SMS SOS fallback. Notifications — for geo-fence alerts and SOS confirmation. Camera — only for QR scanning (authority app). Microphone — only for AI voice input (optional). All permissions are individually requestable and revocable. The app degrades gracefully: if a user denies Bluetooth, BLE layer is disabled but other SOS layers remain active. The app clearly communicates which safety layers are active/inactive based on granted permissions.
+
+
+
+13.4 Emergency Access Permissions
+
+A special emergency access mode exists for first responders. When an authority scans a tourist's QR, they see the basic identity profile. However, medical information (blood group, allergies, conditions) is protected by an additional access tier: the medical data is only shown when the authority provides their authority ID and the access is logged with timestamp and authority identity. This audit trail ensures that medical data access is accountable. In a declared emergency (SOS active), medical data is automatically surfaced to the responding authority to support life-saving decisions.
+
+
+
+
+SECTION 14 — SIH IMPLEMENTATION STRATEGY
+
+
+
+14.1 MVP Priority Order
+
+For SIH, the goal is a working demo that showcases the three most innovative and visually compelling features: SOS multi-layer cascade, blockchain ID verification, and offline AI assistant. Everything else is secondary. MVP priorities in order:
+
+Working Flutter app: Registration → Blockchain ID generation → QR display → Home screen → SOS activation (Layer 1 internet and Layer 4 BLE minimum).
+
+Working React dashboard: Real-time map with one tourist position updating via WebSocket → SOS alert appearing on dashboard when triggered from app.
+
+Backend: Registration endpoint + GPS ingest endpoint + SOS creation endpoint + WebSocket event broadcast.
+
+Blockchain ID: Mock chain implementation, QR generation, QR scan verification returning tourist profile.
+
+AI Assistant: Offline mode with pre-loaded knowledge base, intent classification, SOS trigger detection.
+
+Geo-fence: At least one demo zone drawn on dashboard, tourist receives alert when entering zone.
+
+
+
+14.2 Demo Script for SIH Judges
+
+Act 1 — The Tourist (2 minutes)
+
+Show tourist registration flow on Flutter app
+
+Show blockchain ID being generated (dramatic hash animation)
+
+Show QR code displayed on 'My Digital ID' screen
+
+Show the app's home screen with safety score and geo-fence map
+
+Act 2 — The Emergency (2 minutes)
+
+Explain: 'The tourist is now in a remote zone. Internet goes down.' — enable airplane mode on demo device
+
+Trigger SOS — show Layer 1 failing (timeout animation)
+
+Show Layer 4 BLE activating — show second device receiving the BLE beacon
+
+Second device (with internet) relays SOS — watch it appear on authority dashboard LIVE
+
+Act 3 — The Authority Response (1 minute)
+
+On dashboard: SOS card appears with tourist GPS position
+
+Scan tourist's QR code → 'IDENTITY VERIFIED' with full tourist profile
+
+Acknowledge SOS — app shows 'Help is on the way'
+
+Act 4 — The AI Assistant (1 minute)
+
+Show AI assistant in offline mode
+
+Type 'snake bite on leg' — AI responds with step-by-step first aid
+
+Type 'I am badly injured and can't move' — AI detects EMERGENCY intent, proposes SOS activation
+
+
+
+14.3 Key Innovation Talking Points
+
+'TravelSure is the only tourist safety system in India with a 5-layer offline SOS cascade — a distress signal reaches emergency services even from dead-zone locations.'
+
+'Our blockchain-anchored digital ID eliminates the need for paper documents at checkpoints, hospitals, and emergency scenes — fully verifiable, tamper-proof, and QR-scannable in seconds.'
+
+'Our on-device AI assistant provides contextual, life-saving guidance in the tourist's own language, with zero internet dependency — this is not a chatbot, it is a safety co-pilot.'
+
+'TravelSure is designed to scale to all of India's 700+ tourist destinations with a single backend deployment — from Ladakh to the Andamans.'
+
+
+
+14.4 Judge Questions & Answers
+
+Judge Question
+
+Recommended Answer
+
+'How does BLE mesh actually work?'
+
+Each TravelSure user is both a potential SOS sender and a relay node. BLE advertising is always active. When a relaying device receives a SOS beacon and has internet, it POSTs the SOS to our backend on behalf of the originator. We use hop counting (max 5) to prevent storms. We demonstrate this live with two devices.
+
+'What stops someone from using a fake QR?'
+
+The QR encodes a hash that is recomputed server-side on every scan. The hash chain means altering any identity field produces a completely different hash that won't match what's stored in the blockchain record. Tampering is mathematically detectable.
+
+'Is the AI really offline?'
+
+Yes — we use a 4-bit quantized Mistral model (Ollama) or Phi-2 running locally on the device. We demonstrate this by putting the device in airplane mode and showing the AI responding to safety queries with zero network access.
+
+'Can this scale to national deployment?'
+
+Our backend is containerized with a microservices path. PostGIS handles spatial queries at scale. The only bottleneck is BLE mesh range, which is addressed by tourist density — the more tourists, the more relay nodes. In high-traffic areas, the mesh is dense; in remote areas, SMS and direct internet are primary.
+
+
+
+
+SECTION 15 — DEVELOPMENT ROADMAP
+
+
+
+15.1 Phase-Wise Roadmap
+
+Phase 0 — Foundation (Days 1–2)
+
+All team members set up development environments. Flutter project initialized with folder structure and Riverpod. React dashboard initialized with Vite + Tailwind. Backend initialized with Flask or Express. PostgreSQL + PostGIS provisioned. Firebase project created. GitHub repo created with feature-branch workflow. Team sync: API contract defined (endpoints, request/response schemas). Figma design system page created.
+
+Phase 1 — Core Auth & Identity (Days 3–5)
+
+Ajinkya: Tourist registration Flutter screens + Firebase OTP. Blockchain ID generation backend logic (mock chain). QR generation and display in Flutter app. Ajaya: POST /auth/register + blockchain ID pipeline. PostgreSQL schema creation. JWT issuance. Rishi: GPS service in Flutter (geolocator + background service). Location event model + Hive storage. Abhijeet: Registration UI screens in Figma → Flutter. Dashboard shell + authentication.
+
+Phase 2 — Tracking & Dashboard (Days 6–9)
+
+Ajinkya: BLE advertising setup (flutter_blue_plus). SOS activation UI (3-second press-hold). Ajaya: POST /tracking/location. WebSocket server (Socket.IO). GET /tourists/cluster. Rishi: Background GPS task (WorkManager). Geo-fence zone cache (Hive). dart_turf boundary checking. Abhijeet: Dashboard map integration (Mapbox GL JS). Real-time tourist position layer via WebSocket. Alert feed component.
+
+Phase 3 — SOS System (Days 10–13)
+
+Ajinkya: Full SOS cascade implementation (all 5 layers). BLE SOS relay protocol. SMS dispatch. Ajaya: POST /emergency/sos. Escalation timer logic. SMS webhook (Twilio). Alert routing via Socket.IO. Rishi: Offline SOS queue (Hive). GPS sync on reconnect. Layer status tracking. Abhijeet: SOS alert card on dashboard. Incident management UI. Acknowledge/resolve flow.
+
+Phase 4 — AI & Geo-Fence (Days 14–17)
+
+Ajinkya: QR verification integration. Blockchain scan flow. Abhijeet: AI assistant UI (chat interface, voice input, quick actions). Ollama integration proxy. Rishi: Geo-fence zone alert push (flutter_local_notifications). On-device zone crossing detection. Ajaya: POST /geofence/zones. Geo-fence spatial query job. AI proxy endpoint.
+
+Phase 5 — Polish & Demo Prep (Days 18–21)
+
+All: Bug fixes, UI polish, performance optimization. Demo script dry runs. Edge case handling (battery low, device rotation, network flapping). Analytics dashboard implementation. Video demo recording. Presentation deck creation. Final SIH submission materials.
+
+
+
+15.2 Team Responsibility Matrix
+
+Feature Area
+
+Ajinkya
+
+Ajaya
+
+Rishi
+
+Abhijeet
+
+Flutter App Architecture
+
+Lead
+
+Support
+
+Support
+
+Support
+
+Blockchain / Digital ID
+
+Lead
+
+Support
+
+—
+
+—
+
+BLE / SOS Cascade
+
+Lead
+
+Support (SMS)
+
+Support (GPS)
+
+—
+
+Background GPS Tracking
+
+—
+
+—
+
+Lead
+
+—
+
+Geo-Fencing
+
+—
+
+Support (API)
+
+Lead
+
+Support (Dashboard)
+
+Backend APIs
+
+—
+
+Lead
+
+Support
+
+—
+
+WebSocket / Real-Time
+
+—
+
+Lead
+
+—
+
+Support
+
+React Dashboard
+
+—
+
+Support
+
+—
+
+Lead
+
+AI Assistant
+
+—
+
+Support (proxy)
+
+Support (offline)
+
+Lead (UI)
+
+UI/UX Design
+
+Support
+
+—
+
+—
+
+Lead
+
+Database Design
+
+—
+
+Lead
+
+Support
+
+—
+
+Figma Designs
+
+—
+
+—
+
+—
+
+Lead
+
+
+
+
+SECTION 16 — FUTURE SCOPE
+
+
+
+16.1 Advanced Future Capabilities
+
+Drone Integration
+
+In partnership with state disaster management authorities, TravelSure zones can be equipped with drones that auto-deploy on SOS activation. The drone is guided to the tourist's GPS coordinates, streams live video to the authority dashboard, drops an emergency kit (first aid, water, communication device), and serves as a communication relay node — extending internet coverage to the SOS location. The drone control API integrates with TravelSure's emergency incident system as a responder type.
+
+Satellite Communication (Starlink / ISRO SatCom)
+
+For the most remote areas (Himalayan passes above 4000m, deep forest), TravelSure plans satellite communication integration as Layer 0 — above internet in the SOS cascade. Integration with Garmin inReach API or ISRO's SatCom infrastructure (under India's space commercialization policy) would enable a direct satellite SOS transmission that bypasses all terrestrial infrastructure limitations. This requires a compatible satellite communicator hardware carried by high-risk tourists (trekkers, adventure sports participants).
+
+AI Anomaly Detection & Predictive Safety Scoring
+
+The location history data enables a powerful AI layer: anomaly detection models that identify unusual movement patterns (stationary too long in a danger zone, sudden acceleration suggesting a fall, erratic movement suggesting disorientation, deviation from itinerary without check-in). These patterns trigger proactive wellness checks sent to the tourist: 'You appear to be stationary in a restricted zone for 20 minutes. Are you okay?' Three response options: 'I'm fine', 'I need help' (triggers SOS), or no response (triggers automated soft alert to authorities). Predictive safety scoring uses historical SOS data, weather patterns, and tourist density to compute a real-time risk score for each tourist and each zone.
+
+Smart Wearable Integration
+
+TravelSure can integrate with Garmin, Apple Watch, or Mi Band wearables via their public APIs or BLE health profiles. Wearable data adds: heart rate monitoring (tachycardia detection for stress/panic states), fall detection (accelerometer pattern recognition), body temperature (heat stroke early warning), and SpO2 (altitude sickness indicator for high-altitude treks). This data enriches the AI assistant's context and triggers proactive safety recommendations.
+
+Government API Integration
+
+The National Informatics Centre (NIC) provides APIs for DigiLocker (Aadhaar verification, document storage), NDMA (National Disaster Management Authority — disaster alerts and response protocols), NITI Aayog tourist circuit data, and state-level police dispatch systems. TravelSure's backend is designed with an adapter pattern specifically to integrate these APIs as they become accessible, creating a fully government-integrated national tourist safety platform.
+
+
+
+
+SECTION 17 — RISKS & CHALLENGES
+
+
+
+17.1 Technical Risk Register
+
+Risk
+
+Impact
+
+Mitigation Strategy
+
+BLE range limitations (10–30m in practice)
+
+High — mesh relay may not reach other users in sparse areas
+
+Fallback to SMS and audio layers. BLE is layer 4, not sole dependency. In practice, tourist clusters at popular sites provide adequate mesh density.
+
+iOS background execution restrictions
+
+High — iOS aggressively kills background tasks affecting GPS polling
+
+Use iOS significant-location-change API as primary trigger. Background BGTask for supplemental polling. Clear 'Always On' permission UX with justification.
+
+AI model size on device
+
+Medium — Mistral 7B Q4 is ~4GB, may be too large for low-end devices
+
+Use Phi-2 (~1.6GB) as default. Provide model download as optional upgrade. Core safety knowledge base as pre-loaded JSON (0 inference required for common emergencies).
+
+GPS accuracy in dense forest/canyon
+
+Medium — multipath interference reduces accuracy to 20–50m
+
+Use last_known_location with accuracy flag. Prompt tourist to provide landmark description via AI assistant. Accuracy_meters field in SOS payload informs authorities.
+
+Blockchain performance at scale
+
+Low — PostgreSQL-based mock chain is not truly decentralized
+
+For SIH: mock chain is sufficient and explained as such. For production: Hyperledger Fabric permissioned network handles 1000+ TPS without public chain limitations.
+
+Battery drain from continuous GPS + BLE
+
+High — tourists may disable app to save battery
+
+Adaptive polling intervals (2-min when stationary). BLE advertising-only mode is minimal drain (~1–2% per hour). Battery-aware mode: when < 20%, reduce GPS to 5-min polls, notify tourist.
+
+Wi-Fi Direct Android fragmentation
+
+Medium — Nearby Connections API behavior varies across Android OEMs
+
+Test on Pixel, Samsung, OnePlus (primary Indian brands). Document known incompatibilities. Fallback: BLE only on incompatible devices.
+
+
+
+17.2 Operational Challenges
+
+Tourist Adoption: The system's effectiveness scales with adoption. A single tourist with TravelSure has the full feature set. The BLE mesh only works when multiple users are nearby. Mitigation: Partner with travel agencies, trek operators, and tourism boards for group adoption. Pre-install on rental devices at tourist entry points.
+
+Authority Training: Police and tourism authority staff need training to use the dashboard effectively. Mitigation: Invest in a 2-hour training module and a 'guided first use' experience in the dashboard.
+
+False SOS Events: Accidental SOS triggers waste authority response resources. Mitigation: 3-second press-hold activation, cancel-code requirement, and false alarm marking feature for authorities that triggers a follow-up communication to the tourist.
+
+
+
+
+SECTION 18 — FINAL PROJECT POSITIONING
+
+
+
+18.1 Startup Pitch Positioning
+
+"TravelSure: India's first offline-resilient, AI-powered, blockchain-verified tourist safety platform. We protect tourists from Ladakh to the Andamans — with or without internet."
+
+TravelSure is positioned at the intersection of three major market forces: India's booming domestic tourism sector (projected ₹2.4 lakh crore by 2028), the Indian government's focus on Digital India and tourist safety infrastructure (under the Swadesh Darshan 2.0 and PRASHAD schemes), and the global movement toward AI-augmented emergency response systems. TravelSure captures all three angles: it is a commercial B2G (Business to Government) product, a consumer safety application, and a platform for AI/safety research in tourism.
+
+
+
+18.2 Government Deployment Vision
+
+The TravelSure ecosystem is designed for a state-government deployment model: the state tourism department licenses the Authority Dashboard and backend infrastructure (SaaS model), tourists use the mobile app for free, and the system is white-labeled per state (e.g., 'Kerala Tourist Safety', 'Uttarakhand Trek Guard'). Pilot deployment target: one state (e.g., Himachal Pradesh — high-risk trek routes, established tourism infrastructure) as proof of concept, followed by national rollout through the Ministry of Tourism's digital safety initiative.
+
+
+
+18.3 Social Impact
+
+The social impact of TravelSure is quantifiable: if TravelSure reduces tourist emergency response time from 45 minutes to 8 minutes (achievable with real-time dashboard + BLE mesh relay), it could prevent a significant proportion of the 12,000+ annual tourist fatalities attributable to delayed response. Beyond fatalities, the platform reduces tourist anxiety, increases willingness to visit remote and adventure destinations (economic benefit to local communities), provides data for government safety infrastructure investment, and creates a digital safety net for India's 1.9 billion annual tourist movements.
+
+
+
+18.4 Why TravelSure Stands Out at SIH
+
+Dimension
+
+TravelSure's Differentiator
+
+Technical Innovation
+
+5-layer SOS cascade with BLE mesh relay is genuinely novel in the tourist safety domain. No existing consumer app implements offline mesh SOS.
+
+Completeness
+
+End-to-end ecosystem: tourist app + authority dashboard + AI + blockchain + offline comm. Most SIH teams submit one component. TravelSure is a full product.
+
+Demo Quality
+
+Live SOS relay between two physical devices, live blockchain verification, live AI offline response — three dramatic demo moments that judges will not forget.
+
+Real-World Applicability
+
+Directly addresses a documented, quantifiable problem (tourist safety in India). Judges can immediately see the deployment path.
+
+Scalability Credibility
+
+PostGIS + microservices backend + containerized deployment = credible national scale story. Not just a demo, but a production blueprint.
+
+Team Division Clarity
+
+Clear ownership matrix means every judge question can be answered by the specific team member who built that component — a mark of professional execution.
+
+
+
+
+
+TravelSure Project Playbook — Team: Ajinkya, Ajaya, Rishi, Abhijeet
+
+SIH Problem Statement ID 25002 | Smart Tourist Safety Monitoring & Incident Response System
+
+Team: Ajinkya | Ajaya | Rishi | Abhijeet  —  SIH Problem ID 25002  —  Page
