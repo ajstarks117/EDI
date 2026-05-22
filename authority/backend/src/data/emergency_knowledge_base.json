@@ -1,0 +1,38 @@
+{
+  "snake_bite": {
+    "keywords": ["snake", "bitten by a snake", "snake bite", "cobra", "viper"],
+    "response": "1. Stay calm and keep the bitten area still. \n2. Do NOT cut the wound or attempt to suck out the venom. \n3. Do NOT apply a tourniquet, ice, or water. \n4. Keep the bite area below the level of the heart. \n5. Seek immediate medical assistance."
+  },
+  "fire": {
+    "keywords": ["fire", "burning", "smoke", "flames"],
+    "response": "1. Evacuate immediately. Do not gather belongings. \n2. Stay low to the ground to avoid inhaling smoke. \n3. If a door feels hot, do NOT open it. Find an alternative exit. \n4. If your clothes catch fire, STOP, DROP, and ROLL. \n5. Call emergency services once safe."
+  },
+  "flood": {
+    "keywords": ["flood", "flooding", "water rising", "drowning", "swept away"],
+    "response": "1. Move immediately to higher ground. \n2. Do NOT walk, swim, or drive through floodwaters. \n3. Stay clear of bridges over fast-moving water. \n4. If your vehicle is trapped in rapidly moving water, stay inside. If water rises inside, seek refuge on the roof."
+  },
+  "altitude_sickness": {
+    "keywords": ["altitude sickness", "can't breathe", "dizzy", "high altitude", "mountain sickness"],
+    "response": "1. Stop ascending immediately. \n2. Descend to a lower altitude if symptoms are severe or do not improve. \n3. Rest and stay hydrated. Avoid alcohol and sleeping pills. \n4. Seek medical help if symptoms worsen or breathing becomes difficult."
+  },
+  "road_accident": {
+    "keywords": ["accident", "crash", "collision", "hit by car", "run over"],
+    "response": "1. Move to a safe location away from traffic if possible. \n2. Check for injuries but do NOT move seriously injured persons unless there is immediate danger (like fire). \n3. Call emergency services and provide exact location details. \n4. Do not leave the scene until authorities arrive."
+  },
+  "lost_in_forest": {
+    "keywords": ["lost", "cannot find way", "forest", "jungle", "stuck in woods"],
+    "response": "1. STOP (Stop, Think, Observe, Plan). Stay where you are to make it easier for rescuers to find you. \n2. Conserve your energy, water, and food. \n3. Build or seek shelter before dark. \n4. Make yourself visible (wear bright colors, make noise, use a mirror or fire if safe). \n5. Wait for rescue."
+  },
+  "cardiac_arrest": {
+    "keywords": ["heart attack", "cardiac arrest", "chest pain", "collapsed", "no pulse"],
+    "response": "1. Call emergency services immediately. \n2. If the person is unresponsive and not breathing normally, begin CPR immediately (push hard and fast in the center of the chest). \n3. If an AED (Automated External Defibrillator) is available, use it immediately and follow the voice prompts."
+  },
+  "heat_stroke": {
+    "keywords": ["heat stroke", "overheated", "passed out from heat", "too hot", "sunstroke"],
+    "response": "1. Move the person to a cooler place (shade or air-conditioned room). \n2. Cool the person immediately by applying cold water or ice packs to the neck, armpits, and groin. \n3. Do NOT give fluids if the person is unconscious or vomiting. \n4. Seek immediate emergency medical care."
+  },
+  "animal_attack": {
+    "keywords": ["animal attack", "bear", "tiger", "lion", "wild animal", "bitten by animal"],
+    "response": "1. Do not run or turn your back on a predatory animal. Back away slowly. \n2. Try to appear as large as possible. \n3. If attacked, protect your head and neck. \n4. Clean any bite wounds immediately with soap and water to prevent infection. \n5. Seek immediate medical attention."
+  }
+}
