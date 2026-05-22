@@ -9,6 +9,9 @@ class HiveService {
 
   static const String _profileBoxName = 'touristProfile';
   static const String _blockchainBoxName = 'blockchainId';
+  static const String _tripBoxName = 'active_trip';
+  static const String _itineraryBoxName = 'itineraries';
+  static const String _settingsBoxName = 'settings';
   static const String _encryptionKeyName = 'hive_encryption_key';
   
   static const _secureStorage = FlutterSecureStorage(
@@ -32,6 +35,11 @@ class HiveService {
 
     // 4. Open blockchainId box
     await Hive.openBox(_blockchainBoxName);
+
+    // 5. Open tourist feature boxes
+    await Hive.openBox(_tripBoxName);
+    await Hive.openBox(_itineraryBoxName);
+    await Hive.openBox(_settingsBoxName);
   }
 
   static Future<Box<TouristProfile>> _openEncryptedProfileBox() async {
@@ -69,10 +77,25 @@ class HiveService {
     return Hive.box(_blockchainBoxName);
   }
 
+  static Box get tripBox {
+    return Hive.box(_tripBoxName);
+  }
+
+  static Box get itineraryBox {
+    return Hive.box(_itineraryBoxName);
+  }
+
+  static Box get settingsBox {
+    return Hive.box(_settingsBoxName);
+  }
+
   static Future<void> clearAll() async {
     final box = profileBox;
     await box.clear();
     final blockBox = blockchainBox;
     await blockBox.clear();
+    await tripBox.clear();
+    await itineraryBox.clear();
+    await settingsBox.clear();
   }
 }

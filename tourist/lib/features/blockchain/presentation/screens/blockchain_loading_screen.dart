@@ -226,7 +226,7 @@ class _BlockchainLoadingScreenState extends ConsumerState<BlockchainLoadingScree
                         foregroundColor: Colors.white.withValues(alpha: 0.7),
                       ),
                       onPressed: () {
-                        context.go('/');
+                        context.go('/home');
                       },
                       child: const Text('Back to Home'),
                     ),

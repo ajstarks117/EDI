@@ -136,7 +136,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated) {
         if (next.isProfileComplete) {
-          context.go('/');
+          context.go('/home');
         } else {
           context.go('/profile-setup');
         }
