@@ -82,7 +82,7 @@ const createAlert = async (touristId, payload) => {
   // Step 3 — broadcast to authorities
   broadcastToAuthorities(WS_EVENTS.NEW_SOS, {
     priority:    mapPriorityToContract(alert.priority),
-    message:     payload.message || \`SOS triggered via \${alert.source}\`,
+    message:     payload.message || `SOS triggered via ${alert.source}`,
     touristId:   alert.tourist_id,
     // Keeping extra fields just in case
     id:          alert.id,
@@ -152,7 +152,7 @@ const updateAlertStatus = async (alertId, status, authorityId = null) => {
     id:       alert.id,
     priority: mapPriorityToContract(alert.priority),
     status:   alert.status,
-    message:  \`Alert updated to \${alert.status}\`
+    message:  `Alert updated to ${alert.status}`
   });
 
   return alert;
