@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import { Bell, Shield, Calendar, Clock, Sun, Moon, Wifi } from 'lucide-react';
 import { format } from 'date-fns';
+import { useUIStore } from '../store/useUIStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,24 +10,12 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const [time, setTime] = useState(new Date());
-  const [isDark, setIsDark] = useState(true); // default to dark (ops dashboard)
+  const { darkMode, toggleDarkMode } = useUIStore();
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  /* Sync the .dark class on <html> whenever the toggle changes */
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-  }, [isDark]);
-
-  const toggleTheme = useCallback(() => setIsDark((prev) => !prev), []);
 
   return (
     <div className="min-h-screen bg-surface text-dark-text flex transition-colors duration-300">
@@ -71,11 +60,11 @@ export default function Layout({ children }: LayoutProps) {
             {/* Dark / Light Mode Toggle */}
             <button
               id="theme-toggle"
-              onClick={toggleTheme}
+              onClick={toggleDarkMode}
               className="relative p-2 text-muted-text hover:text-dark-text bg-surface-card/40 hover:bg-surface-card/70 border border-surface-border/20 rounded-md transition duration-150"
               aria-label="Toggle theme"
             >
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
 
             {/* Notifications Button */}
