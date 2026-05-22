@@ -26,8 +26,8 @@ export interface SettingsState {
 }
 
 const initialState = {
-  region: 'global',
-  mapDefaultCenter: [-3.7038, 40.4168] as [number, number], // Madrid, Spain default
+  region: 'pune',
+  mapDefaultCenter: [73.8567, 18.5204] as [number, number], // Pune, India default
   mapDefaultZoom: 12,
   soundVolume: 0.8,
   notificationsEnabled: true,
