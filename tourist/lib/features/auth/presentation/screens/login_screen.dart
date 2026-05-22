@@ -97,7 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const Icon(Icons.travel_explore, color: Colors.white, size: 48),
                     const SizedBox(height: UiConstants.spaceSM),
                     Text(
-                      'TravelSure',
+                      'TravelTrek',
                       style: AppTextStyles.appTitle.copyWith(color: Colors.white),
                     ),
                     const SizedBox(height: UiConstants.spaceXS),

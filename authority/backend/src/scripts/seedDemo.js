@@ -8,7 +8,7 @@ const seedDemo = async () => {
     console.log('[seed] Starting idempotent demo seed...');
 
     // 1. Authority
-    const authHash = await bcrypt.hash('demo@SIH2025', 10);
+    const authHash = await bcrypt.hash('demo@TravelTrek', 10);
     const authRes = await query(
       `INSERT INTO authorities (badge_id, password_hash, role)
        VALUES ('DEMO01', $1, 'officer')
@@ -57,7 +57,7 @@ const seedDemo = async () => {
         ($1, 18.5304, 73.8467, 'test', 'wifi_direct', 'low', 'resolved')
     `, [touristId]);
 
-    console.log('Demo seed complete. Authority: DEMO01 / demo@SIH2025');
+    console.log('Demo seed complete. Authority: DEMO01 / demo@TravelTrek');
 
   } catch (err) {
     console.error('[seed] Error seeding demo data:', err.message);

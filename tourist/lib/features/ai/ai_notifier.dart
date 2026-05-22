@@ -23,7 +23,7 @@ class AiNotifier extends StateNotifier<AiState> {
           messages: [
             AiMessage(
               role: 'assistant',
-              text: "Hello! I'm your TravelSure Safety Assistant. I can help you with emergency guidance, safety tips, first aid, and navigation support — fully offline.\n\nTap a quick action below or describe your situation.",
+              text: "Hello! I'm your TravelTrek Safety Assistant. I can help you with emergency guidance, safety tips, first aid, and navigation support — fully offline.\n\nTap a quick action below or describe your situation.",
               timestamp: DateTime.now(),
             )
           ],

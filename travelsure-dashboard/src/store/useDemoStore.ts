@@ -29,7 +29,7 @@ export const useDemoStore = create<DemoState>((set, get) => ({
   steps: [
     {
       title: "Act 1: Normal System Monitoring",
-      description: "Welcome to the SIH-25002 Demo. Currently, the system is in normal operation. Tourists are tracked in real-time on the map using GPS/Satellite telemetry, and geofence restrictions (warning, restricted, exclusion zones) protect critical areas.",
+      description: "Welcome to the TravelTrek Demo. Currently, the system is in normal operation. Tourists are tracked in real-time on the map using GPS/Satellite telemetry, and geofence restrictions (warning, restricted, exclusion zones) protect critical areas.",
       badge: "Normal Operations"
     },
     {

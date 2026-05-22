@@ -137,7 +137,7 @@ export default function Help() {
             </h2>
             
             <p className="text-sm text-slate-400 leading-relaxed">
-              The TravelSure system uses dynamic, low-latency WebSockets to feed live tourist coordinates and active emergency beacons directly into the Control Operations dashboard.
+              The TravelTrek system uses dynamic, low-latency WebSockets to feed live tourist coordinates and active emergency beacons directly into the Control Operations dashboard.
             </p>
 
             {/* Interactive Visual Stepper */}

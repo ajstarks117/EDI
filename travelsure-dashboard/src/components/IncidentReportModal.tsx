@@ -71,7 +71,7 @@ export default function IncidentReportModal({ alert, onClose }: Props) {
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-3xl font-outfit font-bold text-slate-800 dark:text-slate-100 print:text-black">
-                  TRAVELSURE INCIDENT REPORT
+                  TRAVELTREK INCIDENT REPORT
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 print:text-gray-600">
                   Official Record of Emergency Operation

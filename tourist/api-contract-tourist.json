@@ -1,5 +1,5 @@
 {
-  "title": "TravelSure Tourist App — API Contract (Frontend → Backend)",
+  "title": "TravelTrek Tourist App — API Contract (Frontend → Backend)",
   "version": "1.0.0",
   "base_url": "http://localhost:3001",
   "generated_by": "Ajinkya (Tourist Flutter App)",

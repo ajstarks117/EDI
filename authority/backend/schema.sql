@@ -1,5 +1,5 @@
 -- ============================================================
---  TravelSure — PostgreSQL 15 Schema
+--  TravelTrek — PostgreSQL 15 Schema
 --  Run statements in the order shown.
 --  Compatible with Railway / Render managed Postgres.
 -- ============================================================

@@ -7,7 +7,7 @@ const { JWT_SECRET } = require('../config/env');
 const { sha256 } = require('../utils/hashUtils');
 const { generateIdentity } = require('./blockchainService');
 
-const HASH_SALT = process.env.HASH_SALT || 'travelsure_default_hash_salt_12345';
+const HASH_SALT = process.env.HASH_SALT || 'traveltrek_default_hash_salt_12345';
 
 /**
  * Generate a random segment of uppercase alphanumeric characters

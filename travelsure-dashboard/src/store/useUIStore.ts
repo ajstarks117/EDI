@@ -27,7 +27,7 @@ interface UIState {
 // Initial dark mode: check localStorage first, then prefers-color-scheme, default to dark for ops
 const getInitialDarkMode = (): boolean => {
   if (typeof window === 'undefined') return true;
-  const stored = localStorage.getItem('travelsure-dark-mode');
+  const stored = localStorage.getItem('traveltrek-dark-mode');
   if (stored !== null) return stored === 'true';
   return window.matchMedia('(prefers-color-scheme: dark)').matches || true;
 };
@@ -49,7 +49,7 @@ applyDarkClass(initialDark);
 
 const getInitialBannerDismissed = (): boolean => {
   if (typeof window === 'undefined') return false;
-  return localStorage.getItem('travelsure-banner-dismissed') === 'true';
+  return localStorage.getItem('traveltrek-banner-dismissed') === 'true';
 };
 
 export const useUIStore = create<UIState>((set) => ({
@@ -64,7 +64,7 @@ export const useUIStore = create<UIState>((set) => ({
     const newMode = !state.darkMode;
     applyDarkClass(newMode);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('travelsure-dark-mode', String(newMode));
+      localStorage.setItem('traveltrek-dark-mode', String(newMode));
     }
     return { darkMode: newMode };
   }),
@@ -80,7 +80,7 @@ export const useUIStore = create<UIState>((set) => ({
   setNotificationPermission: (permission) => set({ notificationPermission: permission }),
   dismissBanner: () => set(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('travelsure-banner-dismissed', 'true');
+      localStorage.setItem('traveltrek-banner-dismissed', 'true');
     }
     return { bannerDismissed: true };
   })

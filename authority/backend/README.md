@@ -1,4 +1,4 @@
-# TravelSure Backend — Quick Start
+# TravelTrek Backend — Quick Start
 
 ## Prerequisites
 - Node.js 20+

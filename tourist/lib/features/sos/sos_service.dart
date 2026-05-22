@@ -138,7 +138,7 @@ class SosService {
 
     final fullName = profile?.fullName ?? 'Tourist';
     final timestamp = DateTime.now().toIso8601String();
-    final smsText = 'TRAVELSURE EMERGENCY — $fullName needs help at GPS: $lat,$lng — TravelSure ID: $touristId — Time: $timestamp';
+    final smsText = 'TRAVELTREK EMERGENCY — $fullName needs help at GPS: $lat,$lng — TravelTrek ID: $touristId — Time: $timestamp';
 
     // Recipients: '100' (Police) first, then all emergency contacts numbers
     List<String> recipients = ['100'];

@@ -3,7 +3,7 @@
 /**
  * Standardised API response helpers.
  *
- * Every response from TravelSure has the shape:
+ * Every response from TravelTrek has the shape:
  *   { success: boolean, message: string, data?: any, meta?: any }
  */
 

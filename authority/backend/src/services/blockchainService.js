@@ -17,8 +17,8 @@
 const { query, getClient } = require('../config/db');
 const { sha256 } = require('../utils/hashUtils');
 
-const HASH_SALT     = process.env.HASH_SALT   || 'travelsure_default_hash_salt_12345';
-const VERIFY_BASE   = process.env.VERIFY_BASE_URL || 'https://api.travelsure.in/v1/blockchain/verify';
+const HASH_SALT     = process.env.HASH_SALT   || 'traveltrek_default_hash_salt_12345';
+const VERIFY_BASE   = process.env.VERIFY_BASE_URL || 'https://api.traveltrek.in/v1/blockchain/verify';
 const TWO_YEARS_MS  = 2 * 365.25 * 24 * 60 * 60 * 1000;
 
 // ── In-memory identity cache { tourist_id → blockchainRecord } ────────────────

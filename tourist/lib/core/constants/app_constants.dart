@@ -22,7 +22,7 @@ class AppConstants {
   static const String blockchainVerifyEndpoint = '/api/blockchain/verify';
   static const String geofenceZonesEndpoint = '/api/geofence/zones';
   
-  static const String bleServiceUuid = 'TravelSure-SOS-v1';
+  static const String bleServiceUuid = 'TravelTrek-SOS-v1';
   
   static const int sosHopMax = 5;
   static const int gpsIntervalNormal = 30; // seconds

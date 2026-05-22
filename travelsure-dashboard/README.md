@@ -1,6 +1,6 @@
-# 🏔️ TravelSure Control Operations Centre (SIH-25002)
+# 🏔️ TravelTrek Control Operations Centre
 
-Welcome to the **TravelSure Control Operations Centre**, a premium, mission-critical dashboard designed to oversee tourist safety, real-time telemetry tracking, active geofencing safeguards, and blockchain-verified identity syncs. Built to withstand high-altitude off-grid emergencies, the system relies on an innovative **Bluetooth Low Energy (BLE) Multi-Hop Relay Mesh Network** to route distress SOS alerts even in cellular deadzones.
+Welcome to the **TravelTrek Control Operations Centre**, a premium, mission-critical dashboard designed to oversee tourist safety, real-time telemetry tracking, active geofencing safeguards, and blockchain-verified identity syncs. Built to withstand high-altitude off-grid emergencies, the system relies on an innovative **Bluetooth Low Energy (BLE) Multi-Hop Relay Mesh Network** to route distress SOS alerts even in cellular deadzones.
 
 ---
 

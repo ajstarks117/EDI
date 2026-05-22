@@ -39,8 +39,8 @@ class HomeScreen extends ConsumerWidget {
 
     // Generate a mock email from their name if profile email is missing
     final emailAddress = profile != null
-        ? '${profile.fullName.toLowerCase().replaceAll(' ', '')}@travelsure.org'
-        : 'traveler@travelsure.org';
+        ? '${profile.fullName.toLowerCase().replaceAll(' ', '')}@traveltrek.org'
+        : 'traveler@traveltrek.org';
 
     return Scaffold(
       backgroundColor: AppColors.offWhite,

@@ -236,7 +236,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   void _submitProfile() async {
     final profile = TouristProfile(
-      id: UniqueKey().toString(), // We can generate a unique id for Sih/Ajaya backend
+      id: UniqueKey().toString(), // We can generate a unique id for backend
       phoneNumber: widget.phoneNumber ?? '',
       fullName: _nameController.text.trim(),
       nationality: _nationalityController.text.trim(),

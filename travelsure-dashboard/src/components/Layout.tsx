@@ -80,7 +80,7 @@ export default function Layout({ children }: LayoutProps) {
               {/* Environment Badge */}
               <div className="flex items-center space-x-2 bg-surface-card/60 border border-surface-border/30 px-3 py-1.5 rounded-md">
                 <Shield className="h-4 w-4 text-success-green" />
-                <span className="text-xs font-semibold">SIH-25002 Secure Node</span>
+                <span className="text-xs font-semibold">TravelTrek Secure Node</span>
               </div>
 
             <div id="connectivity-indicator" className="flex items-center space-x-2 bg-surface-card/60 border border-surface-border/30 px-3 py-1.5 rounded-md">

@@ -113,7 +113,7 @@ const processQuery = async (tourist, message, lat, lng) => {
   const languages = tourist.languages || ['English'];
   
   // Step 2 — System prompt
-  const systemPrompt = `You are an offline emergency safety assistant for TravelSure.
+  const systemPrompt = `You are an offline emergency safety assistant for TravelTrek.
 Tourist name: ${name}. Blood group: ${blood_group}.
 Active zones: ${active_zones.join(', ') || 'None'}.
 Respond in: ${languages[0] || 'English'}.

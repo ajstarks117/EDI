@@ -1,8 +1,6 @@
 # TravelTrek: Smart Tourist Safety Monitoring & Incident Response System
 
-TravelTrek (also referred to as TravelSure) is a multi-layered safety monitoring platform designed to protect tourists in remote or high-risk areas using Real-Time Tracking, Geo-Fencing, Blockchain Digital Identities, and a Fail-Safe Multi-Layer SOS communication system.
-
-Developed under SIH Problem Statement ID 25002.
+TravelTrek is a multi-layered safety monitoring platform designed to protect tourists in remote or high-risk areas using Real-Time Tracking, Geo-Fencing, Blockchain Digital Identities, and a Fail-Safe Multi-Layer SOS communication system.
 
 ---
 

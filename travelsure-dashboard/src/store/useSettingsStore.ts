@@ -53,7 +53,7 @@ export const useSettingsStore = create<SettingsState>()(
       resetSettings: () => set(initialState),
     }),
     {
-      name: 'travelsure-settings',
+      name: 'traveltrek-settings',
     }
   )
 );

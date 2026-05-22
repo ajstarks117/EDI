@@ -24,7 +24,7 @@ src/
 
 ## 🛠️ Features Included
 
-1. **Dashboard Triage**: Real-time mock notifications matching the SIH-25002 requirements document.
+1. **Dashboard Triage**: Real-time mock notifications matching the system requirements document.
 2. **Duty Status Control**: Simulate active/inactive officer shifts.
 3. **Interactive Actions**: Initiate emergency call redirects and dispatch or resolve alerts on-chain.
 4. **Geofencing & Alerts**: Interface for configuring safety borders and broadcasting push/SMS advisories to nearby travelers.

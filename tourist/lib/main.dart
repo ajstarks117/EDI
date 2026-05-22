@@ -65,20 +65,20 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     const ProviderScope(
-      child: TravelSureApp(),
+      child: TravelTrekApp(),
     ),
   );
 }
 
-class TravelSureApp extends ConsumerWidget {
-  const TravelSureApp({super.key});
+class TravelTrekApp extends ConsumerWidget {
+  const TravelTrekApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final initAsync = ref.watch(appInitializationProvider);
 
     return MaterialApp(
-      title: 'TravelSure',
+      title: 'TravelTrek',
       theme: AppTheme.lightTheme(),
       debugShowCheckedModeBanner: false,
       home: initAsync.when(
@@ -102,7 +102,7 @@ class RouterAppEntry extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'TravelSure',
+      title: 'TravelTrek',
       theme: AppTheme.lightTheme(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
@@ -185,7 +185,7 @@ class StartupSplashScreen extends StatelessWidget {
               const Icon(Icons.travel_explore, color: Colors.white, size: 64),
               const SizedBox(height: UiConstants.spaceMD),
               Text(
-                'TravelSure',
+                'TravelTrek',
                 style: AppTextStyles.appTitle.copyWith(color: Colors.white),
               ),
               const SizedBox(height: UiConstants.spaceSM),

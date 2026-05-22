@@ -145,13 +145,13 @@ class WifiDirectSosService {
       }
 
       _isDiscovering = await _nearby.startDiscovery(
-        'TravelSure-Relay',
+        'TravelTrek-Relay',
         Strategy.P2P_CLUSTER,
         onEndpointFound: (endpointId, userName, serviceId) async {
           debugPrint('Found Wi-Fi Direct SOS beacon: $userName ($endpointId)');
           try {
             await _nearby.requestConnection(
-              'TravelSure-Relay',
+              'TravelTrek-Relay',
               endpointId,
               onConnectionInitiated: (endid, connectionInfo) async {
                 try {

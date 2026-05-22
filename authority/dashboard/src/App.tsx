@@ -12,11 +12,8 @@ import {
   AlertTriangle,
   LogOut,
   MapPin,
-  Clock,
   CheckCircle,
-  Eye,
-  Send,
-  CloudAlert
+  Send
 } from 'lucide-react';
 
 // Mock Alert Data matching PDF requirements
@@ -706,7 +703,7 @@ export default function App() {
               {/* Box 2: Broadcast Weather Warnings & Alerts */}
               <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-6">
                 <h4 className="text-lg font-bold text-white flex items-center gap-2">
-                  <CloudAlert className="w-5 h-5 text-amber-500" />
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
                   Broadcast Weather / Security Emergency
                 </h4>
                 

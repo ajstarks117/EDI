@@ -242,9 +242,9 @@ void main() {
       expect(recipients, equals(['100', '+919999999999', '+918888888888']));
 
       // Check SMS Content formatting:
-      // 'TRAVELSURE EMERGENCY — [fullName] needs help at GPS: [lat],[lng] — TravelSure ID: [tourist_id] — Time: [timestamp]'
-      expect(message, contains('TRAVELSURE EMERGENCY — John Doe needs help at GPS: 18.5204,73.8567'));
-      expect(message, contains('TravelSure ID: TX-12345'));
+      // 'TRAVELTREK EMERGENCY — [fullName] needs help at GPS: [lat],[lng] — TravelTrek ID: [tourist_id] — Time: [timestamp]'
+      expect(message, contains('TRAVELTREK EMERGENCY — John Doe needs help at GPS: 18.5204,73.8567'));
+      expect(message, contains('TravelTrek ID: TX-12345'));
       expect(message, contains('Time: '));
     });
 

@@ -4,6 +4,8 @@ import { useAlertStore } from '../store/useAlertStore';
 import { useTouristStore } from '../store/useTouristStore';
 import { useUIStore } from '../store/useUIStore';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useGeofenceStore } from '../store/useGeofenceStore';
+
 
 // Create a singleton socket instance outside the hook
 // It's configured to not connect automatically so we can control it in the hook.
@@ -142,7 +144,6 @@ export function useWebSocket() {
 
           // Also add/update the zone in the geofence store for map rendering
           if (data.zone) {
-            const { useGeofenceStore } = require('../store/useGeofenceStore');
             const store = useGeofenceStore.getState();
             const newZone = {
               id: data.zone.id?.toString() || crypto.randomUUID(),

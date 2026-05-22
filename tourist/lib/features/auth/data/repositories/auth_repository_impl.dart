@@ -107,7 +107,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return false;
     } catch (e) {
-      // In Sih debug/demo mode, we can cache locally as fallback if backend is offline
+      // In debug/demo mode, we can cache locally as fallback if backend is offline
       // We will allow registration locally if the call fails with connection error in debug
       assert(() {
         saveLocalProfile(profile);

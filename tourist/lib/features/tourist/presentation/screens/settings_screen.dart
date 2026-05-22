@@ -209,8 +209,8 @@ class SettingsScreen extends ConsumerWidget {
                       // About
                       _SettingsTile(
                         icon: Icons.info_outline_rounded,
-                        title: 'About travel-trek',
-                        subtitle: 'TravelSure Platform version details',
+                        title: 'About TravelTrek',
+                        subtitle: 'TravelTrek Platform version details',
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
@@ -557,7 +557,7 @@ class _SettingsLogoState extends ConsumerState<_SettingsLogo> {
             ),
             const SizedBox(height: 8),
             Text(
-              'TravelSure',
+              'TravelTrek',
               style: GoogleFonts.outfit(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

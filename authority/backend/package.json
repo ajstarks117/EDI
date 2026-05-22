@@ -1,7 +1,7 @@
 {
-  "name": "travelsure-backend",
+  "name": "traveltrek-backend",
   "version": "1.0.0",
-  "description": "TravelSure — Smart Tourist Safety Monitoring Backend API",
+  "description": "TravelTrek — Smart Tourist Safety Monitoring Backend API",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
@@ -32,12 +32,12 @@
     "nodemon": "^3.0.0"
   },
   "keywords": [
-    "travelsure",
+    "traveltrek",
     "tourist-safety",
     "sos",
     "gps-tracking",
     "geofence"
   ],
-  "author": "TravelSure Team",
+  "author": "TravelTrek Team",
   "license": "MIT"
 }

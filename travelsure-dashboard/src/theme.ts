@@ -1,5 +1,5 @@
 /**
- * TravelSure Design System — Color & Typography Tokens
+ * TravelTrek Design System — Color & Typography Tokens
  *
  * These tokens mirror the CSS custom-properties declared in index.css
  * so that both Tailwind utilities AND runtime JS can reference a single

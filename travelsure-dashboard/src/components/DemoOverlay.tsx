@@ -21,7 +21,7 @@ export default function DemoOverlay() {
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Radio className="h-5 w-5 animate-pulse text-indigo-200" />
-          <span className="font-outfit font-bold tracking-wide uppercase text-sm">SIH-25002 Demo Guide</span>
+          <span className="font-outfit font-bold tracking-wide uppercase text-sm">TravelTrek Demo Guide</span>
         </div>
         <button 
           onClick={toggle}

@@ -97,7 +97,7 @@ app.use('/api/sos', sosLimiter);
 app.use('/api/ai', aiLimiter);
 app.use('/api', generalLimiter);
 
-// ── Demo-Bypass SOS Route (No JWT — for SIH demo) ─────────────────────────────
+// ── Demo-Bypass SOS Route (No JWT — for demo) ─────────────────────────────
 // The tourist app sends SOS here without a JWT token. We accept the payload,
 // persist if DB is available, and broadcast to the authority dashboard via Socket.IO.
 const { broadcastToAuthorities, getIO } = require('./websocket/wsServer');
@@ -253,7 +253,7 @@ const start = async () => {
   await new Promise((resolve) => {
     const PORT = env.PORT || 3001;
     httpServer.listen(PORT, '0.0.0.0', () => {
-      console.log(`[server] TravelSure API running on port ${PORT} (${env.NODE_ENV})`);
+      console.log(`[server] TravelTrek API running on port ${PORT} (${env.NODE_ENV})`);
       resolve();
     });
   });

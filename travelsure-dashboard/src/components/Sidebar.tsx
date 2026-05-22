@@ -45,7 +45,7 @@ export default function Sidebar() {
               <BrandIcon className="h-5 w-5 text-white" />
             </div>
             <div>
-              <span className="font-outfit font-bold text-lg tracking-tight leading-none" style={{ color: 'var(--color-dark-text)' }}>TravelSure</span>
+              <span className="font-outfit font-bold text-lg tracking-tight leading-none" style={{ color: 'var(--color-dark-text)' }}>TravelTrek</span>
               <span className="block text-[10px] font-semibold uppercase tracking-wider mt-0.5" style={{ color: 'var(--sidebar-text-active)' }}>Control Centre</span>
             </div>
           </div>
