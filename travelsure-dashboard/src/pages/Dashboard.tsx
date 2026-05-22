@@ -1,6 +1,13 @@
-import { Shield, AlertTriangle, Users, MapPin } from 'lucide-react';
+import { Shield, AlertTriangle, Users, MapPin, Bug } from 'lucide-react';
+import { useAlertStore } from '../store/useAlertStore';
+import { useTouristStore } from '../store/useTouristStore';
+import { useGeofenceStore } from '../store/useGeofenceStore';
 
 export default function Dashboard() {
+  const { addAlert, clearAlerts } = useAlertStore();
+  const { selectTourist, updatePosition } = useTouristStore();
+  const { toggleFilter } = useGeofenceStore();
+
   const stats = [
     { label: 'Active Tourists', value: '1,248', icon: Users, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
     { label: 'Critical Alerts', value: '3', icon: AlertTriangle, color: 'text-rose-400', bg: 'bg-rose-500/10' },
@@ -68,6 +75,46 @@ export default function Dashboard() {
               Sync Smart Contracts
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Temporary Debug Panel */}
+      <div className="glass-panel p-6 rounded-xl space-y-4 border-dashed border-2 border-indigo-500/30">
+        <div className="flex items-center space-x-2 text-indigo-400">
+          <Bug className="h-5 w-5" />
+          <h2 className="text-lg font-semibold">Store State Debugger</h2>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button 
+            onClick={() => addAlert({ type: 'critical', message: 'Test SOS Alert', touristId: '123' })}
+            className="bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 px-3 py-1.5 rounded text-sm font-medium transition"
+          >
+            Add Alert
+          </button>
+          <button 
+            onClick={() => clearAlerts()}
+            className="bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded text-sm font-medium transition"
+          >
+            Clear Alerts
+          </button>
+          <button 
+            onClick={() => selectTourist('tourist-456')}
+            className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 rounded text-sm font-medium transition"
+          >
+            Select Tourist
+          </button>
+          <button 
+            onClick={() => updatePosition('tourist-456', { lat: 30.0, lng: 79.0 })}
+            className="bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 px-3 py-1.5 rounded text-sm font-medium transition"
+          >
+            Update Position
+          </button>
+          <button 
+            onClick={() => toggleFilter('danger')}
+            className="bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 px-3 py-1.5 rounded text-sm font-medium transition"
+          >
+            Toggle Danger Filter
+          </button>
         </div>
       </div>
     </div>
