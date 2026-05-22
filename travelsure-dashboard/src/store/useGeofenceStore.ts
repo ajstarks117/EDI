@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useSettingsStore } from './useSettingsStore';
 
 export interface Geofence {
   id: string;
@@ -34,13 +35,27 @@ export const useGeofenceStore = create<GeofenceState>((set) => ({
   ],
   activeFilters: ['warning', 'restricted', 'exclusion'],
   setGeofences: (geofences) => set({ geofences }),
-  addGeofence: (geofence) => set((state) => ({ geofences: [...state.geofences, geofence] })),
+  addGeofence: (geofence) => {
+    const role = useSettingsStore.getState().operatorProfile.role;
+    if (role !== 'admin') {
+      console.warn('API BLOCKED: Unauthorized to create geofence');
+      return;
+    }
+    set((state) => ({ geofences: [...state.geofences, geofence] }));
+  },
   updateGeofence: (id, updated) => set((state) => ({
     geofences: state.geofences.map(g => g.id === id ? { ...g, ...updated } : g)
   })),
-  deleteGeofence: (id) => set((state) => ({
-    geofences: state.geofences.filter(g => g.id !== id)
-  })),
+  deleteGeofence: (id) => {
+    const role = useSettingsStore.getState().operatorProfile.role;
+    if (role !== 'admin') {
+      console.warn('API BLOCKED: Unauthorized to delete geofence');
+      return;
+    }
+    set((state) => ({
+      geofences: state.geofences.filter(g => g.id !== id)
+    }));
+  },
   toggleFilter: (type) => set((state) => ({
     activeFilters: state.activeFilters.includes(type)
       ? state.activeFilters.filter((f) => f !== type)

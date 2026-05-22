@@ -4,9 +4,13 @@ import { useTouristStore } from '../store/useTouristStore';
 import { useUIStore } from '../store/useUIStore';
 import { useGeofenceStore, type Geofence } from '../store/useGeofenceStore';
 import { useAlertStore } from '../store/useAlertStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { X, User, Activity, MapPin, Battery, PhoneCall, ShieldAlert, Trash2, Check, Radio, Clock, ShieldCheck, CheckCircle, MessageSquare, Map as MapIcon, QrCode, AlertTriangle, Lock } from 'lucide-react';
 import { intervalToDuration } from 'date-fns';
 import QRScannerModal from '../components/QRScannerModal';
+import { useRBAC } from '../hooks/useRBAC';
+import { SkeletonProfile } from '../components/Skeleton';
+import { useDemoStore } from '../store/useDemoStore';
 
 const IncidentTimer = ({ startTime }: { startTime: number }) => {
   const [now, setNow] = useState(Date.now());
@@ -30,7 +34,6 @@ const MAP_CONTAINER_STYLE = {
   borderRadius: '0.75rem'
 };
 
-const DEFAULT_CENTER = { lat: 30.7352, lng: 79.3235 };
 
 const STATUS_COLORS = {
   safe: '#10B981',
@@ -51,6 +54,42 @@ const MARKER_PATH = 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87
 // Needs to be outside component to avoid re-renders
 const LIBRARIES: ("drawing" | "geometry" | "places" | "visualization")[] = ['drawing'];
 
+const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8b8fa3' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#334155' }] },
+  { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#64748b' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#16213e' }] },
+  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#1a1a3a' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#64748b' }] },
+  { featureType: 'poi.park', elementType: 'geometry.fill', stylers: [{ color: '#0f2a1d' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a3a5c' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1e293b' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#334d7a' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1e293b' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0c1929' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4a5568' }] },
+];
+
+const LIGHT_MAP_STYLES: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#c9c9c9' }] },
+  { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#bdbdbd' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#e8edf3' }] },
+  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#dce4ed' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+  { featureType: 'poi.park', elementType: 'geometry.fill', stylers: [{ color: '#c8e6c9' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#dadada' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#b8d4e8' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4a90c4' }] },
+];
+
 export default function Map() {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -60,10 +99,13 @@ export default function Map() {
 
   const mapRef = useRef<google.maps.Map | null>(null);
   
-  const { positions, selectedTourist, selectTourist } = useTouristStore();
-  const { rightPanelOpen, setRightPanelOpen, flyToLocation, setFlyToLocation } = useUIStore();
+  const { positions, selectedTourist, selectTourist, isLoading } = useTouristStore();
+  const { darkMode, rightPanelOpen, setRightPanelOpen, flyToLocation, setFlyToLocation } = useUIStore();
   const { geofences, activeFilters, addGeofence, deleteGeofence } = useGeofenceStore();
   const { alertFeed, updateAlert } = useAlertStore();
+  const { mapDefaultCenter, mapDefaultZoom } = useSettingsStore();
+  const { canManageGeofences, canUnlockMedical } = useRBAC();
+  const demoEnabled = useDemoStore(state => state.enabled);
 
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
@@ -76,23 +118,26 @@ export default function Map() {
   const onLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
     map.setOptions({
-      styles: [
-        { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-        { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-        { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#17263c' }] },
-        // Add more dark mode styling here if desired
-      ],
+      styles: darkMode ? DARK_MAP_STYLES : LIGHT_MAP_STYLES,
       disableDefaultUI: true,
       zoomControl: true,
       mapTypeControl: false,
       streetViewControl: false,
     });
-  }, []);
+  }, [darkMode]);
 
   const onUnmount = useCallback(() => {
     mapRef.current = null;
   }, []);
+
+  // Swap map styles when darkMode toggles — preserves camera state
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.setOptions({
+        styles: darkMode ? DARK_MAP_STYLES : LIGHT_MAP_STYLES,
+      });
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     if (flyToLocation && mapRef.current) {
@@ -108,6 +153,11 @@ export default function Map() {
 
   // Handle polygon drawn
   const onPolygonComplete = (polygon: google.maps.Polygon) => {
+    if (!canManageGeofences()) {
+      polygon.setMap(null);
+      setIsDrawingMode(false);
+      return;
+    }
     setDrawingPolygon(polygon);
     setIsDrawingMode(false);
     setSelectedZone('new');
@@ -159,8 +209,8 @@ export default function Map() {
       {/* Mapbox -> Google Maps migration complete */}
       <GoogleMap
         mapContainerStyle={MAP_CONTAINER_STYLE}
-        center={DEFAULT_CENTER}
-        zoom={10}
+        center={{ lat: mapDefaultCenter[1], lng: mapDefaultCenter[0] }}
+        zoom={mapDefaultZoom}
         onLoad={onLoad}
         onUnmount={onUnmount}
         onClick={() => {
@@ -251,13 +301,16 @@ export default function Map() {
       <div className="absolute top-4 left-4 bg-surface-card/90 backdrop-blur border border-surface-border p-2 rounded-lg z-10 shadow-lg flex items-center space-x-2">
         <button
           onClick={() => {
+            if (!canManageGeofences()) return;
             setIsDrawingMode(!isDrawingMode);
             if (!isDrawingMode && drawingPolygon) {
               drawingPolygon.setMap(null);
               setDrawingPolygon(null);
             }
           }}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${isDrawingMode ? 'bg-indigo-600 text-white' : 'bg-surface-bg hover:bg-surface-border/50 text-slate-300'}`}
+          disabled={!canManageGeofences()}
+          title={!canManageGeofences() ? "Restricted: Requires Admin role" : "Draw a new geofence zone"}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${isDrawingMode ? 'bg-indigo-600 text-white' : 'bg-surface-bg hover:bg-surface-border/50 text-slate-300'}`}
         >
           {isDrawingMode ? 'Cancel Drawing' : 'Draw New Zone'}
         </button>
@@ -267,10 +320,16 @@ export default function Map() {
       {rightPanelOpen && (
         <div className="absolute top-4 right-4 w-80 max-h-[calc(100%-2rem)] overflow-y-auto bg-surface-card/95 backdrop-blur-xl border border-surface-border rounded-xl shadow-2xl flex flex-col z-10 transition-transform duration-300">
           
-          {/* Tourist Profile / Incident Panel */}
-          {activeTourist && !activeAlert && (
+          {isLoading ? (
+            <div className="p-6">
+              <SkeletonProfile />
+            </div>
+          ) : (
             <>
-              <div className="flex items-center justify-between p-4 border-b border-surface-border">
+              {/* Tourist Profile / Incident Panel */}
+              {activeTourist && !activeAlert && (
+                <>
+                  <div className="flex items-center justify-between p-4 border-b border-surface-border">
                 <h3 className="font-outfit font-semibold text-lg flex items-center space-x-2">
                   <User className="h-5 w-5 text-indigo-400" />
                   <span>Tourist Profile</span>
@@ -282,7 +341,7 @@ export default function Map() {
                       <span>Verified</span>
                     </span>
                   )}
-                  <button onClick={() => setRightPanelOpen(false)} className="p-1 rounded-md hover:bg-surface-border/50 text-muted-text hover:text-dark-text">
+                  <button onClick={() => setRightPanelOpen(false)} aria-label="Close" className="p-1 rounded-md hover:bg-surface-border/50 text-muted-text hover:text-dark-text focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
@@ -309,7 +368,7 @@ export default function Map() {
                 {!activeTourist.isIdentityVerified && (
                   <button 
                     onClick={() => setIsQRScannerOpen(true)}
-                    className="w-full flex items-center justify-center space-x-2 py-2.5 bg-surface-bg hover:bg-surface-border border border-indigo-500/30 text-indigo-400 rounded-lg text-sm font-semibold transition"
+                    className="w-full flex items-center justify-center space-x-2 py-2.5 bg-surface-bg hover:bg-surface-border border border-indigo-500/30 text-indigo-400 rounded-lg text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 focus:ring-offset-surface-card"
                   >
                     <QrCode className="h-4 w-4" />
                     <span>Scan QR Blockchain ID</span>
@@ -366,7 +425,9 @@ export default function Map() {
                     {(!isAdminUnlocked && activeTourist.status !== 'critical') && (
                       <button 
                         onClick={() => setIsAdminUnlocked(true)}
-                        className="flex items-center space-x-1 text-xs px-2 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded"
+                        disabled={!canUnlockMedical()}
+                        title={!canUnlockMedical() ? "Restricted: Requires Admin role" : "Unlock Medical Data"}
+                        className="flex items-center space-x-1 text-xs px-2 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Lock className="h-3 w-3" /><span>Override</span>
                       </button>
@@ -425,7 +486,7 @@ export default function Map() {
                   <ShieldAlert className="h-5 w-5 animate-pulse" />
                   <span>Active Incident</span>
                 </h3>
-                <button onClick={() => setRightPanelOpen(false)} className="p-1 rounded-md hover:bg-rose-500/20 text-rose-400">
+                <button onClick={() => setRightPanelOpen(false)} aria-label="Close Incident" className="p-1 rounded-md hover:bg-rose-500/20 text-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500">
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -467,6 +528,42 @@ export default function Map() {
                     <p className="text-slate-300"><span className="text-slate-500">Attempted:</span> GSM (Failed)</p>
                   </div>
                 </div>
+
+                {demoEnabled && (
+                  <div id="ble-mesh-indicator" className="space-y-2 bg-indigo-500/10 p-3 rounded-xl border border-indigo-500/20 shadow-lg shadow-indigo-900/10 animate-in fade-in duration-300">
+                    <p className="text-xs text-indigo-300 uppercase font-bold flex items-center space-x-1.5">
+                      <Radio className="h-4 w-4 animate-pulse text-indigo-400" />
+                      <span>Simulated BLE Relay Mesh Path</span>
+                    </p>
+                    <div className="text-xs space-y-2 mt-2">
+                      <div className="flex items-center justify-between text-slate-300 font-medium">
+                        <span className="text-slate-400">BLE Relay Status:</span>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 uppercase tracking-wider text-[10px]">Active Mesh</span>
+                      </div>
+                      <div className="space-y-1 bg-surface-bg/75 p-2 rounded-lg border border-surface-border font-mono text-[11px] leading-relaxed">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-rose-500 animate-pulse font-bold text-xs">●</span>
+                          <span className="text-slate-200">Alex Mercer (t-101) [SOS Node]</span>
+                        </div>
+                        <div className="text-slate-500 pl-1 text-[9px]">│ (BLE 42m hop)</div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-amber-500 font-bold text-xs">●</span>
+                          <span className="text-slate-200">Alice Smith (t-102) [Relay Node]</span>
+                        </div>
+                        <div className="text-slate-500 pl-1 text-[9px]">│ (BLE 85m hop)</div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-emerald-500 font-bold text-xs">●</span>
+                          <span className="text-slate-200">Static BLE Hub #14 [Gateway Node]</span>
+                        </div>
+                        <div className="text-slate-500 pl-1 text-[9px]">│ (Satellite Uplink)</div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-indigo-400 font-bold text-xs">▲</span>
+                          <span className="text-indigo-300 font-semibold">Control Operations Center</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-4 border-t border-rose-500/20 bg-surface-bg/80 flex flex-col space-y-2">
                 {activeAlert.status === 'new' && (
@@ -579,12 +676,16 @@ export default function Map() {
                     setSelectedZone(null);
                     setRightPanelOpen(false);
                   }}
-                  className="flex-1 flex justify-center items-center space-x-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 py-2 rounded-lg font-medium border border-rose-500/20 transition"
+                  disabled={!canManageGeofences()}
+                  title={!canManageGeofences() ? "Restricted: Requires Admin role" : "Delete Geofence"}
+                  className="flex-1 flex justify-center items-center space-x-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 py-2 rounded-lg font-medium border border-rose-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="h-4 w-4" /><span>Delete</span>
                 </button>
               </div>
             </>
+          )}
+          </>
           )}
         </div>
       )}

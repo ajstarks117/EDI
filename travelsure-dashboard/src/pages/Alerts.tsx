@@ -1,9 +1,14 @@
 import { useRef, useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAlertStore, type Alert } from '../store/useAlertStore';
-import { ShieldAlert, AlertTriangle, Info, AlertOctagon, CheckCircle, Volume2, ArrowRightCircle, User } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Info, AlertOctagon, CheckCircle, Volume2, ArrowRightCircle, User, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useRBAC } from '../hooks/useRBAC';
+import IncidentReportModal from '../components/IncidentReportModal';
+import { SkeletonRow } from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import { useState } from 'react';
 
 const PriorityIcon = ({ priority }: { priority: Alert['priority'] }) => {
   switch (priority) {
@@ -26,8 +31,10 @@ const PriorityLabel = ({ priority }: { priority: Alert['priority'] }) => {
 };
 
 export default function Alerts() {
-  const { alertFeed, updateAlert, addAlert } = useAlertStore();
+  const { alertFeed, isLoading, error, updateAlert, addAlert, initializeData } = useAlertStore();
   const navigate = useNavigate();
+  const { canManageAlerts } = useRBAC();
+  const [selectedReportAlert, setSelectedReportAlert] = useState<Alert | null>(null);
 
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -42,10 +49,37 @@ export default function Alerts() {
     updateAlert(id, { status: newStatus });
   }, [updateAlert]);
 
-  const testAudio = () => {
-    // Generate a test P0 alert to verify audio and insert it to queue
-    const audio = new Audio('/sos-alert.mp3'); // Requires actual file in public, but tests permission
-    audio.play().catch(e => alert('Audio play blocked: ' + e.message));
+  const testAlerts = () => {
+    // Play synthetic distinct tone
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 beep
+      oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.2);
+      
+      gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.5);
+    } catch (e) {
+      alert('Audio play blocked: ' + (e as Error).message);
+    }
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('⚠️ P0 SOS ALERT', {
+        body: 'TEST: Audio and Notification permission check',
+        requireInteraction: true,
+      });
+    } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
+      alert('Notification permission not granted. Please enable via the banner.');
+    }
     
     addAlert({
       priority: 'P0',
@@ -72,11 +106,11 @@ export default function Alerts() {
             <span className="text-sm font-medium">Queue Active: {alertFeed.length}</span>
           </div>
           <button 
-            onClick={testAudio}
+            onClick={testAlerts}
             className="flex items-center space-x-2 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 border border-indigo-500/30 px-4 py-2 rounded-lg font-medium transition"
           >
             <Volume2 className="h-4 w-4" />
-            <span>Enable Audio</span>
+            <span>Test Audio & Notifications</span>
           </button>
         </div>
       </div>
@@ -85,13 +119,35 @@ export default function Alerts() {
         ref={parentRef} 
         className="flex-1 overflow-auto rounded-xl border border-surface-border bg-surface-card/40 backdrop-blur"
       >
-        <div
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative',
-          }}
-        >
+        {isLoading ? (
+          <div className="p-4 space-y-4">
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center text-rose-400">
+            <AlertTriangle className="h-12 w-12 mb-4 opacity-50" />
+            <p className="font-semibold">Failed to load alerts</p>
+            <p className="text-sm opacity-80 mb-4">{error}</p>
+            <button onClick={initializeData} className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 rounded transition text-sm">Retry</button>
+          </div>
+        ) : alertFeed.length === 0 ? (
+          <EmptyState 
+            icon={CheckCircle}
+            title="All Clear"
+            description="There are currently no active alerts or incidents in the queue. Everything is operating normally."
+          />
+        ) : (
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const alert = alertFeed[virtualRow.index];
             const isRead = alert.status === 'closed' || alert.status === 'acknowledged';
@@ -107,11 +163,14 @@ export default function Alerts() {
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
-                className={`border-b border-surface-border p-4 flex flex-col justify-center transition-colors ${
-                  !isRead ? 'bg-surface-card/60' : 'bg-transparent opacity-60'
-                } hover:bg-surface-bg`}
+                className={`flex items-center justify-between w-full p-4 border-b border-surface-border transition cursor-default group focus:outline-none focus:ring-inset focus:ring-2 focus:ring-indigo-500 focus:z-10 hover:bg-surface-card
+                  ${!isRead ? 'bg-surface-card/60' : 'bg-transparent opacity-60'}
+                `}
+                tabIndex={0}
+                role="group"
+                aria-label={`${alert.priority} alert: ${alert.message}`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-4 flex-1">
                     <div className={`p-2 rounded-lg ${alert.priority === 'P0' ? 'bg-rose-500/10' : 'bg-surface-bg'}`}>
                       <PriorityIcon priority={alert.priority} />
@@ -136,7 +195,9 @@ export default function Alerts() {
                     {alert.status === 'new' && (
                       <button 
                         onClick={() => handleAction(alert.id, 'acknowledged')}
-                        className="px-3 py-1.5 text-xs font-semibold rounded bg-indigo-600 hover:bg-indigo-700 text-white transition"
+                        disabled={!canManageAlerts()}
+                        title={!canManageAlerts() ? "Restricted: Requires Admin or Dispatcher role" : "Acknowledge"}
+                        className="px-3 py-1.5 text-xs font-semibold rounded bg-indigo-600 hover:bg-indigo-700 text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Acknowledge
                       </button>
@@ -144,7 +205,9 @@ export default function Alerts() {
                     {(alert.status === 'new' || alert.status === 'acknowledged') && (
                       <button 
                         onClick={() => handleAction(alert.id, 'assigned')}
-                        className="px-3 py-1.5 text-xs font-semibold rounded bg-surface-bg hover:bg-surface-border border border-surface-border text-slate-300 transition"
+                        disabled={!canManageAlerts()}
+                        title={!canManageAlerts() ? "Restricted: Requires Admin or Dispatcher role" : "Assign"}
+                        className="px-3 py-1.5 text-xs font-semibold rounded bg-surface-bg hover:bg-surface-border border border-surface-border text-slate-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Assign
                       </button>
@@ -161,7 +224,9 @@ export default function Alerts() {
                     {alert.status !== 'escalated' && alert.status !== 'closed' && (
                       <button 
                         onClick={() => handleAction(alert.id, 'escalated')}
-                        className="flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 transition"
+                        disabled={!canManageAlerts()}
+                        title={!canManageAlerts() ? "Restricted: Requires Admin or Dispatcher role" : "Escalate"}
+                        className="flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ArrowRightCircle className="h-3.5 w-3.5" />
                         <span>Escalate</span>
@@ -170,10 +235,21 @@ export default function Alerts() {
                     {alert.status !== 'closed' && (
                       <button 
                         onClick={() => handleAction(alert.id, 'closed')}
-                        className="flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 transition"
+                        disabled={!canManageAlerts()}
+                        title={!canManageAlerts() ? "Restricted: Requires Admin or Dispatcher role" : "Close"}
+                        className="flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <CheckCircle className="h-3.5 w-3.5" />
                         <span>Close</span>
+                      </button>
+                    )}
+                    {alert.status === 'closed' && (
+                      <button 
+                        onClick={() => setSelectedReportAlert(alert)}
+                        className="flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/20 text-slate-300 transition"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        <span>View Report</span>
                       </button>
                     )}
                   </div>
@@ -182,7 +258,15 @@ export default function Alerts() {
             );
           })}
         </div>
+        )}
       </div>
+      
+      {selectedReportAlert && (
+        <IncidentReportModal 
+          alert={selectedReportAlert} 
+          onClose={() => setSelectedReportAlert(null)} 
+        />
+      )}
     </div>
   );
 }

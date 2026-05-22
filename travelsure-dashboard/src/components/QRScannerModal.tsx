@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { X, Upload, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useTouristStore } from '../store/useTouristStore';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface QRScannerModalProps {
   touristId: string;
@@ -14,6 +15,7 @@ export default function QRScannerModal({ touristId, onClose }: QRScannerModalPro
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const { setIdentityVerified } = useTouristStore();
+  const trapRef = useFocusTrap(true, onClose);
 
   useEffect(() => {
     scannerRef.current = new Html5Qrcode('qr-reader');
@@ -81,10 +83,16 @@ export default function QRScannerModal({ touristId, onClose }: QRScannerModalPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-surface-card border border-surface-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+      <div 
+        ref={trapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="qr-modal-title"
+        className="bg-surface-card border border-surface-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
+      >
         <div className="flex items-center justify-between p-4 border-b border-surface-border bg-surface-bg/50">
-          <h2 className="font-outfit font-semibold text-lg text-slate-200">Verify Identity</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-surface-border text-muted-text hover:text-slate-200 transition">
+          <h2 id="qr-modal-title" className="font-outfit font-semibold text-lg text-slate-200">Verify Identity</h2>
+          <button onClick={onClose} aria-label="Close" className="p-1 rounded hover:bg-surface-border text-muted-text hover:text-slate-200 transition">
             <X className="h-5 w-5" />
           </button>
         </div>

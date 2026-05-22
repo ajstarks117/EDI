@@ -27,6 +27,14 @@
   --surface-card:   #FFFFFF;
   --surface-border: #DDE3EC;
 
+  /* ── Sidebar (light mode) ──────────────────────────── */
+  --sidebar-bg:       #F0F3F8;
+  --sidebar-active:   #E8EDFF;
+  --sidebar-border:   #DDE3EC;
+  --sidebar-text:     #475569;
+  --sidebar-text-active: #4F46E5;
+  --sidebar-header-bg: #E8ECF2;
+
   /* ── Typography ────────────────────────────────────── */
   --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Outfit', 'Inter', sans-serif;
@@ -37,6 +45,14 @@
   --surface-bg:     #0B0F19;
   --surface-card:   #1E293B;
   --surface-border: #334155;
+
+  /* ── Sidebar (dark mode) ───────────────────────────── */
+  --sidebar-bg:       #0F172A;
+  --sidebar-active:   rgba(99, 102, 241, 0.1);
+  --sidebar-border:   rgba(51, 65, 85, 0.4);
+  --sidebar-text:     #94A3B8;
+  --sidebar-text-active: #818CF8;
+  --sidebar-header-bg: rgba(11, 15, 25, 0.6);
 
   /* Playbook colours stay the same across modes, but we
      shift text contrast so labels remain readable. */
@@ -60,7 +76,7 @@
     color: var(--color-dark-text);
     font-family: var(--font-sans);
     line-height: 1.5;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -79,13 +95,18 @@
    COMPONENT UTILITIES
    ══════════════════════════════════════════════════════════════════ */
 @layer components {
+  /* ── Themeable Surface Transitions ──────────────────── */
+  .theme-transition {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  }
+
   /* Glassmorphism panel — cards, sidebar, modals */
   .glass-panel {
     background: rgba(30, 41, 59, 0.45);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: background-color 0.25s ease;
+    transition: background-color 0.3s ease;
   }
 
   /* Light-mode glass variant */
@@ -110,6 +131,38 @@
     box-shadow: 0 0 15px rgba(99, 102, 241, 0.10);
   }
 
+  /* ── Alert Severity Badges (accessible in both modes) ── */
+  .alert-p0 {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  :root:not(.dark) .alert-p0 {
+    background-color: rgba(211, 47, 47, 0.1);
+    color: #B91C1C;
+    border-color: rgba(211, 47, 47, 0.25);
+  }
+
+  .alert-p1 {
+    background-color: rgba(249, 115, 22, 0.15);
+    color: #FB923C;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+  :root:not(.dark) .alert-p1 {
+    color: #C2410C;
+    border-color: rgba(249, 115, 22, 0.25);
+  }
+
+  .alert-p2 {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  :root:not(.dark) .alert-p2 {
+    color: #B45309;
+    border-color: rgba(245, 158, 11, 0.25);
+  }
+
   /* ── Premium Scrollbar ─────────────────────────────── */
   ::-webkit-scrollbar {
     width: 6px;
@@ -127,6 +180,25 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-muted-text);
+  }
+
+  /* Print Styles for Incident Reports */
+  @media print {
+    @page {
+      margin: 20mm;
+      size: A4 portrait;
+    }
+    
+    body {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      background: white !important;
+    }
+
+    .print-avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
   }
 }
 
@@ -151,3 +223,4 @@
 .pulse-emergency {
   animation: emergencyPulse 2s infinite;
 }
+
