@@ -247,7 +247,9 @@ class _MapboxCanvasState extends State<_MapboxCanvas> {
   @override
   void initState() {
     super.initState();
-    MapboxOptions.setAccessToken("YOUR_MAPBOX_TOKEN");
+    MapboxOptions.setAccessToken(
+      const String.fromEnvironment('MAPBOX_TOKEN', defaultValue: 'YOUR_MAPBOX_TOKEN'),
+    );
   }
 
   void _onMapCreated(MapboxMap mapboxMap) async {
