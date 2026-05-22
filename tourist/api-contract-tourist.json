@@ -1,0 +1,221 @@
+{
+  "title": "TravelSure Tourist App — API Contract (Frontend → Backend)",
+  "version": "1.0.0",
+  "base_url": "http://localhost:3001",
+  "generated_by": "Ajinkya (Tourist Flutter App)",
+  "date": "2026-05-23",
+  "note": "These are ALL the endpoints the tourist Flutter app calls. Ajaya — please wire your Express/backend routes to match these exactly. Field names, types, and response shapes are final on our side.",
+
+  "routes": [
+    {
+      "id": "R1",
+      "name": "SOS Emergency Broadcast (Layer 1 — Internet)",
+      "method": "POST",
+      "path": "/api/sos",
+      "description": "Primary SOS distress signal. Sent immediately when tourist activates the emergency cascade. 3-second timeout enforced on client side.",
+      "used_in": [
+        "lib/features/sos/sos_service.dart (Layer 1 + relay)",
+        "lib/features/tourist/presentation/screens/sos_screen.dart (legacy fallback)"
+      ],
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request_body": {
+        "lat":                  { "type": "double",   "required": true,  "example": 18.5204,  "description": "GPS latitude" },
+        "lng":                  { "type": "double",   "required": true,  "example": 73.8567,  "description": "GPS longitude" },
+        "message":              { "type": "string",   "required": true,  "example": "Tourist SOS — manual activation", "description": "Human-readable SOS message" },
+        "source":               { "type": "string",   "required": true,  "enum": ["manual"],  "description": "Trigger type" },
+        "blockchain_id_hash":   { "type": "string",   "required": true,  "example": "0xabc123...", "description": "SHA-256 block hash from Hive blockchainId box" },
+        "battery_percent":      { "type": "int",      "required": true,  "example": 72,       "description": "Device battery level 0-100" },
+        "connectivity":         { "type": "string",   "required": true,  "enum": ["online", "offline"], "description": "Network state at time of dispatch" },
+        "emergency_contacts":   {
+          "type": "array",
+          "required": true,
+          "items": {
+            "name":  { "type": "string", "example": "Priya Sharma" },
+            "phone": { "type": "string", "example": "+919876543210" }
+          },
+          "description": "Tourist's saved emergency contacts"
+        },
+        "channel":              { "type": "string",   "required": true,  "const": "internet", "description": "Cascade layer identifier" }
+      },
+      "response_200_201": {
+        "id": { "type": "string", "example": "SOS-1716400000123", "description": "Unique SOS incident ID assigned by backend" }
+      },
+      "timeout": "3 seconds"
+    },
+
+    {
+      "id": "R2",
+      "name": "Tourist Profile Registration + Blockchain KYC",
+      "method": "POST",
+      "path": "/auth/register",
+      "description": "Registers tourist profile during onboarding. Called from both auth flow (full profile) and blockchain service (hashed identity payload). The blockchain service sends SHA-256 hashed fields in alphabetical key order.",
+      "used_in": [
+        "lib/features/auth/data/repositories/auth_repository_impl.dart (full profile)",
+        "lib/features/blockchain/data/services/blockchain_service.dart (hashed identity)"
+      ],
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request_body_variant_1_auth_register": {
+        "id":                 { "type": "string",  "example": "uuid-v4" },
+        "phoneNumber":        { "type": "string",  "example": "+919876543210" },
+        "fullName":           { "type": "string",  "example": "Raj Sharma" },
+        "nationality":        { "type": "string",  "example": "Indian" },
+        "idType":             { "type": "string",  "example": "Passport" },
+        "idNumber":           { "type": "string",  "example": "J1234567" },
+        "profilePhotoUrl":    { "type": "string",  "example": "https://..." },
+        "bloodGroup":         { "type": "string",  "example": "B+" },
+        "medicalConditions":  { "type": "string",  "example": "None" },
+        "emergencyContacts":  {
+          "type": "array",
+          "items": {
+            "name":     { "type": "string" },
+            "phone":    { "type": "string" },
+            "relation": { "type": "string" }
+          }
+        },
+        "languages":          { "type": "array", "items": "string", "example": ["English", "Hindi"] },
+        "regionCode":         { "type": "string", "example": "IN" }
+      },
+      "request_body_variant_2_blockchain_identity": {
+        "_note": "Keys are in STRICT ALPHABETICAL ORDER. All personal data is SHA-256 hashed.",
+        "emergency_contacts_hash": { "type": "string", "description": "SHA-256 of JSON-encoded emergency contacts list" },
+        "full_name":               { "type": "string" },
+        "id_document_type":        { "type": "string", "example": "Passport" },
+        "id_number_hash":          { "type": "string", "description": "SHA-256 of raw ID number" },
+        "phone_hash":              { "type": "string", "description": "SHA-256 of raw phone number" },
+        "region_code":             { "type": "string", "example": "IN" },
+        "registration_timestamp":  { "type": "string", "format": "ISO 8601 UTC", "example": "2026-05-22T18:49:24.328009Z" }
+      },
+      "response_200_201_auth": {
+        "success": { "type": "bool" },
+        "message": { "type": "string" }
+      },
+      "response_200_201_blockchain": {
+        "tourist_id":     { "type": "string", "example": "TX-ABCDE123" },
+        "block_hash":     { "type": "string", "example": "0xabc123..." },
+        "identity_hash":  { "type": "string", "example": "16593f06a0a4dc..." },
+        "qr_data":        { "type": "string", "description": "Base64-encoded JSON containing tourist_id, block_hash, identity_hash, issued_at" },
+        "issued_at":      { "type": "string", "format": "ISO 8601 UTC" }
+      },
+      "timeout": "5 seconds"
+    },
+
+    {
+      "id": "R3",
+      "name": "Blockchain ID Verification",
+      "method": "POST",
+      "path": "/blockchain/verify",
+      "description": "Verifies a tourist's blockchain identity hash against the ledger. Reserved endpoint — not yet called actively, but the constant is defined.",
+      "used_in": [
+        "lib/core/constants/app_constants.dart (constant defined)"
+      ],
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request_body": {
+        "identity_hash": { "type": "string", "description": "SHA-256 identity hash to verify" }
+      },
+      "response_200": {
+        "verified": { "type": "bool" },
+        "tourist_id": { "type": "string" },
+        "block_hash": { "type": "string" }
+      }
+    },
+
+    {
+      "id": "R4",
+      "name": "Geo-Fence Zones List",
+      "method": "GET",
+      "path": "/geofence/zones",
+      "description": "Fetches all active geo-fence zone definitions. Cached in Hive on the client. Refreshed on app launch and every 4 hours via WorkManager.",
+      "used_in": [
+        "lib/features/geofence/geofence_cache_service.dart"
+      ],
+      "request_body": null,
+      "response_200": {
+        "_note": "Can be a raw array OR wrapped in { data: [...] }. Client handles both.",
+        "example_raw_array": [
+          {
+            "id": "zone-001",
+            "name": "Mulshi Lake Restricted Area",
+            "zoneType": "restricted",
+            "polygonCoordinates": [[73.45, 18.50], [73.46, 18.51], [73.47, 18.50], [73.45, 18.50]],
+            "advisoryText": "Swimming prohibited. Strong undercurrents reported.",
+            "isActive": true
+          }
+        ],
+        "field_definitions": {
+          "id":                   { "type": "string" },
+          "name":                 { "type": "string" },
+          "zoneType":             { "type": "string",  "enum": ["warning", "restricted", "exclusion"] },
+          "polygonCoordinates":   { "type": "array of [lng, lat] pairs", "description": "Ring must be closed (first == last point). Minimum 4 points." },
+          "advisoryText":         { "type": "string" },
+          "isActive":             { "type": "bool" }
+        }
+      },
+      "timeout": "4 seconds"
+    },
+
+    {
+      "id": "R5",
+      "name": "AI Chat Proxy (Online Mode)",
+      "method": "POST",
+      "path": "/ai/chat",
+      "description": "Proxies tourist AI safety queries to Claude/Gemini when device is online. Falls back to local Ollama if this fails.",
+      "used_in": [
+        "lib/features/ai/ollama_client.dart"
+      ],
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request_body": {
+        "message":   { "type": "string", "description": "Combined system prompt + user query (legacy flat field)" },
+        "prompt":    { "type": "string", "description": "Same as message (duplicate for compatibility)" },
+        "messages":  {
+          "type": "array",
+          "description": "OpenAI-style chat messages array",
+          "items": {
+            "role":    { "type": "string", "enum": ["system", "user"] },
+            "content": { "type": "string" }
+          }
+        }
+      },
+      "response_200": {
+        "_note": "Client checks these keys in order: text → response → message → content. Return at least one.",
+        "text": { "type": "string", "description": "AI-generated safety response" }
+      },
+      "timeout": "5 seconds"
+    },
+
+    {
+      "id": "R6",
+      "name": "Background Location Sync (Backtracking Trace)",
+      "method": "POST",
+      "path": "/api/emergency/sos",
+      "description": "Periodic background location sync from WorkManager. Uses the authority backend's SOS endpoint format. Currently hardcoded to http://10.0.2.2:5000 (emulator). Needs to be updated to match Ajaya's final deployed URL.",
+      "used_in": [
+        "lib/features/safety/services/background_tracking.dart",
+        "lib/features/tourist/presentation/screens/sos_screen.dart (legacy)"
+      ],
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request_body": {
+        "touristId":    { "type": "string", "example": "+919876543210" },
+        "touristName":  { "type": "string", "example": "Raj Sharma" },
+        "latitude":     { "type": "double", "example": 18.5204 },
+        "longitude":    { "type": "double", "example": 73.8567 },
+        "type":         { "type": "string", "example": "Live Backtracking Trace" },
+        "description":  { "type": "string", "example": "Periodic background location tracking trace." }
+      },
+      "response_200_201": {
+        "success": { "type": "bool" }
+      },
+      "timeout": "4 seconds",
+      "TODO": "⚠️ AJAYA: This endpoint is currently hardcoded to http://10.0.2.2:5000/api/emergency/sos. We need your final deployed base URL to update this."
+    }
+  ]
+}

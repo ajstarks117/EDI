@@ -7,8 +7,10 @@ import 'package:dio/dio.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter_sms/src/messages.g.dart';
 
+import 'package:traveltrek_tourist_app/core/constants/app_constants.dart';
 import 'package:traveltrek_tourist_app/features/auth/domain/models/emergency_contact.dart';
 import 'package:traveltrek_tourist_app/features/auth/domain/models/tourist_profile.dart';
+import 'package:traveltrek_tourist_app/features/sos/ble_sos_service.dart';
 import 'package:traveltrek_tourist_app/features/sos/presentation/providers/sos_state.dart';
 import 'package:traveltrek_tourist_app/features/sos/sos_service.dart';
 
@@ -280,6 +282,89 @@ void main() {
       expect(notifier.state.layerInternet, equals(SosLayerStatus.failed));
       expect(notifier.state.layerSms, equals(SosLayerStatus.success));
       expect(sentSmsList.length, equals(1));
+    });
+  });
+
+  group('BLE Mesh & WiFi Direct unit tests', () {
+    test('BLE 21-byte Binary Payload Serialization & Deserialization', () {
+      const touristId = 'TX-12345';
+      const lat = 18.5204;
+      const lng = 73.8567;
+      const timestamp = 1716388800; // arbitrary timestamp
+      const hopCount = 2;
+
+      final payload = buildBleSosPayload(
+        touristId: touristId,
+        lat: lat,
+        lng: lng,
+        timestamp: timestamp,
+        hopCount: hopCount,
+      );
+
+      // Verify length
+      expect(payload.length, equals(21));
+
+      // Deserialize
+      final decoded = DecodedBleSos.fromBytes(payload);
+
+      // Verify fields
+      // touristId must be padded to 8 bytes in serialization, so 'TX-12345' becomes 'TX-12345 '
+      expect(decoded.touristId, equals('TX-12345'));
+      // Fixed point conversion loss is minimal:
+      expect(decoded.lat, closeTo(lat, 0.00001));
+      expect(decoded.lng, closeTo(lng, 0.00001));
+      expect(decoded.timestamp, equals(timestamp));
+      expect(decoded.hopCount, equals(hopCount));
+    });
+
+    test('BLE LRU Cache Deduplication & Eviction (> 50 entries)', () {
+      final cache = SosLruCache();
+
+      // Add 50 entries
+      for (int i = 1; i <= 50; i++) {
+        cache.add('user$i', 1000 + i);
+      }
+
+      // Check they exist
+      expect(cache.contains('user1', 1001), isTrue);
+      expect(cache.contains('user50', 1050), isTrue);
+
+      // Add 51st entry
+      cache.add('user51', 1051);
+
+      // Verify oldest entry ('user1', 1001) has been evicted
+      expect(cache.contains('user1', 1001), isFalse);
+      
+      // Verify other entries are still present
+      expect(cache.contains('user2', 1002), isTrue);
+      expect(cache.contains('user51', 1051), isTrue);
+
+      // Re-add 'user2' to update its recency
+      cache.add('user2', 1002);
+
+      // Add 'user52' to trigger another eviction
+      cache.add('user52', 1052);
+
+      // 'user3' (now the oldest) should be evicted, but 'user2' should remain
+      expect(cache.contains('user3', 1003), isFalse);
+      expect(cache.contains('user2', 1002), isTrue);
+    });
+
+    test('BLE Mesh Hop Count boundaries', () {
+      // Maximum hops should be 5 as per AppConstants.sosHopMax
+      expect(AppConstants.sosHopMax, equals(5));
+
+      // Test that buildBleSosPayload constructs correct hop count
+      final payload = buildBleSosPayload(
+        touristId: 'TX-12345',
+        lat: 12.3456,
+        lng: 78.9012,
+        timestamp: 123456,
+        hopCount: 5,
+      );
+
+      final decoded = DecodedBleSos.fromBytes(payload);
+      expect(decoded.hopCount, equals(5));
     });
   });
 }

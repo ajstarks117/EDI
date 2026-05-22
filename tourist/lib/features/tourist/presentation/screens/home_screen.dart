@@ -12,6 +12,11 @@ import '../../../blockchain/presentation/providers/blockchain_provider.dart';
 import '../../../blockchain/domain/models/blockchain_record.dart';
 import '../providers/trip_provider.dart';
 import '../../domain/models/trip_model.dart';
+import '../../../geofence/geofence_provider.dart';
+import '../../../geofence/geofence_zone.dart';
+import '../../../safety/services/gps_service.dart';
+import '../../../sos/presentation/providers/sos_state.dart';
+import '../../../../core/providers/connectivity_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -29,6 +34,8 @@ class HomeScreen extends ConsumerWidget {
     final profile = authState.profile;
     final trip = ref.watch(tripProvider);
     final blockchainRecordAsync = ref.watch(blockchainIdProvider);
+    final geofenceState = ref.watch(geofenceProvider);
+    final activeZones = geofenceState.activeZones;
 
     // Generate a mock email from their name if profile email is missing
     final emailAddress = profile != null
@@ -73,6 +80,14 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          if (activeZones.isNotEmpty)
+            SliverToBoxAdapter(
+              child: InkWell(
+                onTap: () => _showZoneDetails(context, activeZones),
+                child: _GeofenceActiveZonesBanner(activeZones: activeZones),
+              ),
+            ),
 
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100), // extra padding at bottom for bottom buttons
@@ -404,6 +419,239 @@ class HomeScreen extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+
+  void _showZoneDetails(BuildContext context, List<GeofenceZone> zones) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E293B), // Slate 800 dark theme background
+            borderRadius: BorderRadius.circular(UiConstants.radiusLG),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.shield_rounded, color: AppColors.safetyTeal, size: 24),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Active Safety Zones',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ...zones.map((zone) {
+                Color accentColor;
+                IconData icon;
+                switch (zone.zoneType.toLowerCase()) {
+                  case 'warning':
+                    accentColor = AppColors.warningAmber;
+                    icon = Icons.warning_amber_rounded;
+                    break;
+                  case 'restricted':
+                    accentColor = const Color(0xFFE65100);
+                    icon = Icons.report_problem_rounded;
+                    break;
+                  case 'exclusion':
+                    accentColor = AppColors.alertRed;
+                    icon = Icons.dangerous_rounded;
+                    break;
+                  default:
+                    accentColor = AppColors.primaryNavy;
+                    icon = Icons.info_outline;
+                }
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(UiConstants.radiusMD),
+                    border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(icon, color: accentColor, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              zone.name,
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            child: Text(
+                              zone.zoneType.toUpperCase(),
+                              style: GoogleFonts.inter(
+                                color: accentColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        zone.advisoryText.isNotEmpty
+                            ? zone.advisoryText
+                            : 'No specific advisories. Please remain vigilant.',
+                        style: GoogleFonts.inter(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 14,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _GeofenceActiveZonesBanner extends StatelessWidget {
+  final List<GeofenceZone> activeZones;
+
+  const _GeofenceActiveZonesBanner({required this.activeZones});
+
+  @override
+  Widget build(BuildContext context) {
+    if (activeZones.isEmpty) return const SizedBox.shrink();
+
+    // Determine highest severity
+    // exclusion > restricted > warning
+    final hasExclusion = activeZones.any((z) => z.zoneType.toLowerCase() == 'exclusion');
+    final hasRestricted = activeZones.any((z) => z.zoneType.toLowerCase() == 'restricted');
+
+    Color bannerColor;
+    Color textColor = Colors.white;
+    IconData icon;
+    String prefix;
+    List<Color> gradientColors;
+
+    if (hasExclusion) {
+      bannerColor = AppColors.alertRed;
+      icon = Icons.dangerous_rounded;
+      prefix = 'DANGER';
+      gradientColors = [const Color(0xFFD32F2F), const Color(0xFFB71C1C)];
+    } else if (hasRestricted) {
+      bannerColor = const Color(0xFFE65100); // Deep Orange
+      icon = Icons.report_problem_rounded;
+      prefix = 'RESTRICTED';
+      gradientColors = [const Color(0xFFF57C00), const Color(0xFFE65100)];
+    } else {
+      bannerColor = AppColors.warningAmber;
+      textColor = AppColors.darkText;
+      icon = Icons.warning_amber_rounded;
+      prefix = 'CAUTION';
+      gradientColors = [const Color(0xFFFFB300), const Color(0xFFFFA000)];
+    }
+
+    final zoneNames = activeZones.map((z) => z.name).join(', ');
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: bannerColor.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: textColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: textColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$prefix ZONE DETECTED',
+                  style: GoogleFonts.outfit(
+                    color: textColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  zoneNames,
+                  style: GoogleFonts.inter(
+                    color: textColor.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: textColor.withValues(alpha: 0.7),
+            size: 24,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1038,63 +1286,198 @@ class _LoadingCard extends StatelessWidget {
   }
 }
 
-class _SafetyScoreCard extends StatelessWidget {
+class _SafetyScoreCard extends ConsumerWidget {
   const _SafetyScoreCard();
 
+  Widget _buildStatusChip(String label, bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive 
+            ? AppColors.successGreen.withValues(alpha: 0.08) 
+            : AppColors.mutedText.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(
+          color: isActive 
+              ? AppColors.successGreen.withValues(alpha: 0.25) 
+              : AppColors.mutedText.withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: isActive ? AppColors.successGreen : AppColors.mutedText,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: isActive ? AppColors.successGreen : AppColors.mutedText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
-    const score = 82;
-    const color = AppColors.successGreen;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 1. Compute Score
+    int score = 0;
+    
+    // +30 if GPS tracking active (emitted in the last 60 seconds)
+    final isGpsActive = ref.watch(gpsActiveProvider);
+    if (isGpsActive) score += 30;
+
+    // +25 if Blockchain ID verified and cached
+    final blockchainRecord = ref.watch(blockchainIdProvider).valueOrNull;
+    final isBlockchainActive = blockchainRecord != null;
+    if (isBlockchainActive) score += 25;
+
+    // +25 if emergency contacts set (2+)
+    final authState = ref.watch(authNotifierProvider);
+    final contactsCount = authState.profile?.emergencyContacts.length ?? 0;
+    final isContactsActive = contactsCount >= 2;
+    if (isContactsActive) score += 25;
+
+    // +20 if BLE advertising active
+    final sosState = ref.watch(sosStateProvider);
+    final isBleActive = sosState.isBleAdvertising;
+    if (isBleActive) score += 20;
+
+    // Internet active (connectivityStateProvider is online)
+    final isInternetActive = ref.watch(connectivityStateProvider);
+
+    // Determine colors
+    Color scoreColor;
+    String advisoryText;
+    if (score >= 80) {
+      scoreColor = AppColors.successGreen;
+      advisoryText = '✓ Secured — Mesh relay & GPS active';
+    } else if (score >= 50) {
+      scoreColor = AppColors.warningAmber;
+      advisoryText = '⚠ Warning — Missing emergency contacts or offline mesh';
+    } else {
+      scoreColor = AppColors.alertRed;
+      advisoryText = '🚨 Vulnerable — High emergency risk. Complete setup immediately!';
+    }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(UiConstants.radiusLG),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Row(
+            children: [
+              const Icon(Icons.security_rounded, color: AppColors.primaryNavy, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Safety Score Status',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: AppColors.darkText,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Large 120dp Ring
           SizedBox(
-            width: 58,
-            height: 58,
+            width: 120,
+            height: 120,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                CircularProgressIndicator(
-                  value: score / 100,
-                  strokeWidth: 5,
-                  backgroundColor: color.withValues(alpha: 0.12),
-                  valueColor: const AlwaysStoppedAnimation<Color>(color),
+                SizedBox(
+                  width: 120,
+                  height: 120,
+                  child: CircularProgressIndicator(
+                    value: score / 100,
+                    strokeWidth: 8,
+                    backgroundColor: scoreColor.withValues(alpha: 0.12),
+                    valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
+                  ),
                 ),
-                Text(
-                  '$score',
-                  style: GoogleFonts.inter(color: color, fontSize: 18, fontWeight: FontWeight.bold),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$score',
+                      style: GoogleFonts.outfit(
+                        color: scoreColor,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        height: 1.1,
+                      ),
+                    ),
+                    Text(
+                      'Safety Score',
+                      style: GoogleFonts.inter(
+                        color: AppColors.mutedText,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Safety Score',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.darkText),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Your current area is secure. Network signal is strong. Stay aware of weather updates.',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.mutedText),
-                ),
-              ],
+          const SizedBox(height: 20),
+          // Active Layer Indicators (GPS • BLE • Internet • Blockchain)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildStatusChip('GPS', isGpsActive),
+              _buildStatusChip('BLE', isBleActive),
+              _buildStatusChip('Internet', isInternetActive),
+              _buildStatusChip('Blockchain', isBlockchainActive),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Dynamic Advisory Text
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: scoreColor.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(UiConstants.radiusMD),
+              border: Border.all(
+                color: scoreColor.withValues(alpha: 0.18),
+                width: 1.5,
+              ),
+            ),
+            child: Text(
+              advisoryText,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: scoreColor,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
         ],

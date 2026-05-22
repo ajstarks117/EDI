@@ -1,11 +1,14 @@
 import 'dart:async';
-import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../safety/services/gps_service.dart';
 import '../../sos_service.dart';
+import '../../wifi_direct_sos_service.dart';
+import '../../ble_sos_service.dart';
+import '../../audio_morse_service.dart';
+import '../../../../core/services/hive_service.dart';
+import '../../../../core/constants/app_constants.dart';
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -53,6 +56,7 @@ class SosState {
   final int? estimatedResponseMin;
   final String? relayedBy;
   final String? locationText;
+  final bool isBleAdvertising;
 
   const SosState({
     this.status = SosStatus.idle,
@@ -66,6 +70,7 @@ class SosState {
     this.estimatedResponseMin,
     this.relayedBy,
     this.locationText,
+    this.isBleAdvertising = false,
   });
 
   SosState copyWith({
@@ -80,6 +85,7 @@ class SosState {
     int? estimatedResponseMin,
     String? relayedBy,
     String? locationText,
+    bool? isBleAdvertising,
     bool clearSosId = false,
     bool clearRelayedBy = false,
   }) {
@@ -95,6 +101,7 @@ class SosState {
       estimatedResponseMin: estimatedResponseMin ?? this.estimatedResponseMin,
       relayedBy: clearRelayedBy ? null : (relayedBy ?? this.relayedBy),
       locationText: locationText ?? this.locationText,
+      isBleAdvertising: isBleAdvertising ?? this.isBleAdvertising,
     );
   }
 
@@ -110,11 +117,85 @@ class SosState {
 // ---------------------------------------------------------------------------
 
 class SosNotifier extends StateNotifier<SosState> {
-  SosNotifier() : super(const SosState());
+  SosNotifier() : super(const SosState()) {
+    _initRelayCallbacks();
+    _startBackgroundDiscovery();
+  }
 
   Timer? _activationTimer;
   final GpsService _gpsService = GpsService();
   final SosService _sosService = SosService();
+  final WifiDirectSosService _wifiDirectService = WifiDirectSosService();
+  final BleSosService _bleService = BleSosService();
+  final AudioMorseService _audioMorseService = AudioMorseService();
+
+  void _initRelayCallbacks() {
+    _wifiDirectService.onOnlineRelayRequest = (payload) {
+      _relaySosOnline(payload);
+    };
+    _wifiDirectService.onOfflineRelayRequest = (payload) {
+      _relaySosOffline(payload);
+    };
+    _bleService.onOnlineRelayRequest = (payload) {
+      _relaySosOnline(payload);
+    };
+  }
+
+  void _startBackgroundDiscovery() {
+    _wifiDirectService.startSosDiscovery();
+    _bleService.startScanning(notifier: this);
+  }
+
+  void _stopBackgroundDiscovery() {
+    _wifiDirectService.stopSosDiscovery();
+    _bleService.stopScanning();
+  }
+
+  void _relaySosOnline(Map<String, dynamic> relayData) async {
+    final apiPayload = {
+      'lat': (relayData['lat'] as num?)?.toDouble() ?? 0.0,
+      'lng': (relayData['lng'] as num?)?.toDouble() ?? 0.0,
+      'message': 'Tourist SOS — relayed by ${relayData['relay_tourist_id'] ?? 'mesh'}',
+      'source': 'manual',
+      'blockchain_id_hash': relayData['tourist_id'] ?? '',
+      'battery_percent': 100,
+      'connectivity': 'online',
+      'emergency_contacts': [],
+      'channel': 'internet',
+    };
+
+    await _sosService.relaySos(apiPayload);
+  }
+
+  void _relaySosOffline(Map<String, dynamic> payload) async {
+    try {
+      final String touristId = payload['tourist_id'] ?? '';
+      final double lat = (payload['lat'] as num?)?.toDouble() ?? 0.0;
+      final double lng = (payload['lng'] as num?)?.toDouble() ?? 0.0;
+      final int timestamp = (payload['timestamp'] as num?)?.toInt() ?? 0;
+      final int hopCount = (payload['hop_count'] as num?)?.toInt() ?? 0;
+
+      if (hopCount > AppConstants.sosHopMax) {
+        debugPrint('Offline relay: hop count exceeded max');
+        return;
+      }
+
+      final blePayload = buildBleSosPayload(
+        touristId: touristId,
+        lat: lat,
+        lng: lng,
+        timestamp: timestamp,
+        hopCount: hopCount,
+      );
+
+      if (mounted) {
+        state = state.copyWith(isBleAdvertising: true);
+      }
+      await _bleService.startAdvertising(payload: blePayload);
+    } catch (e) {
+      debugPrint('Error during offline relay: $e');
+    }
+  }
 
   void setLayerStatus(LayerType type, SosLayerStatus status) {
     if (!mounted) return;
@@ -176,7 +257,14 @@ class SosNotifier extends StateNotifier<SosState> {
 
   // --- Full SOS trigger ---
 
+  Future<void> activateSos() async {
+    await _triggerSos();
+  }
+
   Future<void> _triggerSos() async {
+    // Stop background discovery to avoid radio / channel conflicts
+    _stopBackgroundDiscovery();
+
     // 1. Acquire location with prefetch fallback and 2-second timeout
     Position? pos;
     try {
@@ -222,9 +310,17 @@ class SosNotifier extends StateNotifier<SosState> {
 
     // 3. If Layer 1 (Internet) did NOT succeed, fire Wi-Fi Direct, BLE, and Audio Siren concurrently
     if (state.layerInternet != SosLayerStatus.success) {
+      String touristId = '';
+      try {
+        final blockData = HiveService.blockchainBox.get('current_record');
+        if (blockData != null) {
+          touristId = (blockData['tourist_id'] ?? blockData['touristId'] ?? '') as String;
+        }
+      } catch (_) {}
+
       await Future.wait([
-        _fireLayerWifiDirect(),
-        _fireLayerBle(),
+        _fireLayerWifiDirect(touristId, lat, lng),
+        _fireLayerBle(touristId, lat, lng),
         _fireLayerAudio(),
       ]);
     }
@@ -234,6 +330,7 @@ class SosNotifier extends StateNotifier<SosState> {
     final anySuccess =
         state.layerInternet == SosLayerStatus.success ||
         state.layerSms == SosLayerStatus.success ||
+        state.layerWifiDirect == SosLayerStatus.success ||
         state.layerBle == SosLayerStatus.success;
     if (anySuccess && state.status == SosStatus.active) {
       state = state.copyWith(
@@ -244,49 +341,46 @@ class SosNotifier extends StateNotifier<SosState> {
   }
 
   // --- Layer 3: Wi-Fi Direct ---
-  Future<void> _fireLayerWifiDirect() async {
+  Future<void> _fireLayerWifiDirect(String touristId, double lat, double lng) async {
     if (!mounted) return;
     state = state.copyWith(layerWifiDirect: SosLayerStatus.attempting);
-    await Future.delayed(const Duration(milliseconds: 800));
 
-    // Wi-Fi Direct is a best-effort channel; mark success if wifi is on
     try {
-      final conn = await Connectivity().checkConnectivity();
-      if (!mounted) return;
-      state = state.copyWith(
-        layerWifiDirect: conn.contains(ConnectivityResult.wifi)
-            ? SosLayerStatus.success
-            : SosLayerStatus.failed,
+      await _wifiDirectService.startSosAdvertising(
+        notifier: this,
+        touristId: touristId,
+        lat: lat,
+        lng: lng,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error starting Wi-Fi Direct in notifier: $e');
       if (!mounted) return;
       state = state.copyWith(layerWifiDirect: SosLayerStatus.failed);
     }
   }
 
   // --- Layer 4: BLE ---
-  Future<void> _fireLayerBle() async {
+  Future<void> _fireLayerBle(String touristId, double lat, double lng) async {
     if (!mounted) return;
-    state = state.copyWith(layerBle: SosLayerStatus.attempting);
-    await Future.delayed(const Duration(milliseconds: 800));
+    state = state.copyWith(layerBle: SosLayerStatus.attempting, isBleAdvertising: true);
 
     try {
-      final isSupported = await FlutterBluePlus.isSupported;
-      if (isSupported) {
-        final adapterState = await FlutterBluePlus.adapterState.first;
-        if (!mounted) return;
-        state = state.copyWith(
-          layerBle: adapterState == BluetoothAdapterState.on
-              ? SosLayerStatus.success
-              : SosLayerStatus.failed,
-        );
-      } else {
-        if (!mounted) return;
-        state = state.copyWith(layerBle: SosLayerStatus.failed);
-      }
-    } catch (_) {
+      final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final blePayload = buildBleSosPayload(
+        touristId: touristId,
+        lat: lat,
+        lng: lng,
+        timestamp: timestamp,
+        hopCount: 0,
+      );
+
+      await _bleService.startAdvertising(payload: blePayload);
       if (!mounted) return;
-      state = state.copyWith(layerBle: SosLayerStatus.failed);
+      state = state.copyWith(layerBle: SosLayerStatus.success, isBleAdvertising: true);
+    } catch (e) {
+      debugPrint('Error starting BLE advertisement: $e');
+      if (!mounted) return;
+      state = state.copyWith(layerBle: SosLayerStatus.failed, isBleAdvertising: false);
     }
   }
 
@@ -294,18 +388,25 @@ class SosNotifier extends StateNotifier<SosState> {
   Future<void> _fireLayerAudio() async {
     if (!mounted) return;
     state = state.copyWith(layerAudio: SosLayerStatus.attempting);
-    await Future.delayed(const Duration(milliseconds: 600));
 
     try {
-      for (int i = 0; i < 6; i++) {
-        HapticFeedback.vibrate();
-        await Future.delayed(const Duration(milliseconds: 120));
-      }
+      await _audioMorseService.startSiren();
       if (!mounted) return;
       state = state.copyWith(layerAudio: SosLayerStatus.success);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error starting Audio Morse Siren: $e');
       if (!mounted) return;
       state = state.copyWith(layerAudio: SosLayerStatus.failed);
+    }
+  }
+
+  // --- Stop all active services ---
+  void _stopAllServices() {
+    _wifiDirectService.stopSosAdvertising();
+    _bleService.stopAdvertising();
+    _audioMorseService.stopSiren();
+    if (mounted) {
+      state = state.copyWith(isBleAdvertising: false);
     }
   }
 
@@ -315,11 +416,13 @@ class SosNotifier extends StateNotifier<SosState> {
     if (code.length == 4 && RegExp(r'^\d{4}$').hasMatch(code)) {
       _activationTimer?.cancel();
       _activationTimer = null;
+      _stopAllServices();
       state = const SosState(status: SosStatus.cancelled);
       // Reset to idle after a short delay
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           state = const SosState();
+          _startBackgroundDiscovery();
         }
       });
       return true;
@@ -331,12 +434,16 @@ class SosNotifier extends StateNotifier<SosState> {
   void resetToIdle() {
     _activationTimer?.cancel();
     _activationTimer = null;
+    _stopAllServices();
     state = const SosState();
+    _startBackgroundDiscovery();
   }
 
   @override
   void dispose() {
     _activationTimer?.cancel();
+    _stopAllServices();
+    _stopBackgroundDiscovery();
     super.dispose();
   }
 }

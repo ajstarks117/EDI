@@ -67,6 +67,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (isAuthenticated) {
       state = state.copyWith(status: AuthStatus.authenticated);
       await checkProfileStatus();
+    } else {
+      // Auto-login bypass for demo/testing if local profile is cached
+      final localProfile = await _repository.getLocalProfile();
+      if (localProfile != null) {
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          isProfileComplete: localProfile.isComplete,
+          profile: localProfile,
+        );
+      }
     }
   }
 

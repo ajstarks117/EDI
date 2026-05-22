@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:workmanager/workmanager.dart';
 import 'gps_service.dart';
+import '../../geofence/geofence_cache_service.dart';
 
 @pragma('vm:entry-point')
 void backgroundCallbackDispatcher() {
@@ -13,10 +14,23 @@ void backgroundCallbackDispatcher() {
     try {
       // 1. Initialize Hive for background process
       await Hive.initFlutter();
+
+      if (taskName == GeofenceCacheService.geofenceRefreshTaskName) {
+        try {
+          final dio = Dio();
+          final cacheService = GeofenceCacheService(dio: dio);
+          await cacheService.fetchAndCacheZones();
+        } catch (e) {
+          debugPrint('Background geofence cache refresh failed: $e');
+        }
+        return Future.value(true);
+      }
+
       final settingsBox = await Hive.openBox('settings');
       
       // Check if tracking is enabled in Settings
       final trackingEnabled = settingsBox.get('backtrackingEnabled', defaultValue: true);
+
       if (!trackingEnabled) {
         return Future.value(true);
       }

@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/constants/app_constants.dart';
 
 class GpsService {
   Future<LocationPermission> requestPermission() async {
@@ -39,14 +42,14 @@ class GpsService {
     }
   }
 
-  Stream<Position> getLocationStream() {
+  Stream<Position> getLocationStream({int intervalSeconds = 30}) {
     late LocationSettings locationSettings;
 
     if (defaultTargetPlatform == TargetPlatform.android) {
       locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 0,
-        intervalDuration: const Duration(seconds: 30),
+        intervalDuration: Duration(seconds: intervalSeconds),
       );
     } else if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
       locationSettings = AppleSettings(
@@ -65,3 +68,64 @@ class GpsService {
     return Geolocator.getPositionStream(locationSettings: locationSettings);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Riverpod Providers for GPS Service
+// ---------------------------------------------------------------------------
+
+final gpsServiceProvider = Provider<GpsService>((ref) => GpsService());
+
+final gpsIntervalProvider = StateProvider<int>((ref) => AppConstants.gpsIntervalNormal);
+
+final locationStreamProvider = StreamProvider<Position>((ref) {
+  final gpsService = ref.watch(gpsServiceProvider);
+  final interval = ref.watch(gpsIntervalProvider);
+  return gpsService.getLocationStream(intervalSeconds: interval);
+});
+
+class GpsActiveNotifier extends StateNotifier<bool> {
+  final Ref _ref;
+  Timer? _timer;
+  DateTime? _lastEmission;
+
+  GpsActiveNotifier(this._ref) : super(false) {
+    _listenToGps();
+  }
+
+  void _listenToGps() {
+    _ref.listen<AsyncValue<Position>>(locationStreamProvider, (previous, next) {
+      if (next.hasValue) {
+        _lastEmission = DateTime.now();
+        state = true;
+        _startTimer();
+      }
+    }, fireImmediately: true);
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (_lastEmission == null) {
+        state = false;
+        timer.cancel();
+      } else {
+        final difference = DateTime.now().difference(_lastEmission!);
+        if (difference.inSeconds > 60) {
+          state = false;
+          timer.cancel();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+}
+
+final gpsActiveProvider = StateNotifierProvider<GpsActiveNotifier, bool>((ref) {
+  return GpsActiveNotifier(ref);
+});
+

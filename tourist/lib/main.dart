@@ -1,18 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:workmanager/workmanager.dart';
 import 'router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/hive_service.dart';
 import 'core/constants/ui_constants.dart';
 import 'features/safety/services/background_tracking.dart';
+import 'features/geofence/geofence_notification_service.dart';
+import 'features/geofence/geofence_cache_service.dart';
+import 'features/geofence/presentation/widgets/geofence_alert_overlay.dart';
+import 'core/providers/connectivity_provider.dart';
+import 'core/services/demo_service.dart';
 
 // Async initialization provider
 final appInitializationProvider = FutureProvider<void>((ref) async {
   // 1. Initialize Hive (critical for local config/caching)
   await HiveService.init();
 
-  // 2. Initialize Background Tracking Service
+  // Seed demo data (only in debug/demo mode, idempotent)
+  await DemoService.seedDemoData();
+
+  // 2. Initialize Geofence Caching & Notification Service
+  try {
+    await GeofenceNotificationService.initialize();
+    await GeofenceNotificationService.requestPermissions();
+
+    final cacheService = GeofenceCacheService();
+    await cacheService.fetchAndCacheZones();
+
+    await Workmanager().registerPeriodicTask(
+      "2",
+      GeofenceCacheService.geofenceRefreshTaskName,
+      frequency: const Duration(hours: 4),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+    );
+  } catch (e) {
+    debugPrint('Geofence initial sync/Workmanager setup error: $e');
+  }
+
+  // 3. Initialize Background Tracking Service
   try {
     await BackgroundTrackingService.initialize();
     final isBacktrackingEnabled = HiveService.settingsBox.get('backtrackingEnabled', defaultValue: true);
@@ -23,7 +53,7 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
     debugPrint('Background tracking service failed to start: $e');
   }
 
-  // 3. Initialize Firebase (non-critical fallback for offline/development testing)
+  // 4. Initialize Firebase (non-critical fallback for offline/development testing)
   try {
     await Firebase.initializeApp();
   } catch (e) {
@@ -76,6 +106,60 @@ class RouterAppEntry extends ConsumerWidget {
       theme: AppTheme.lightTheme(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null)
+              Column(
+                children: [
+                  const ConnectivityBanner(),
+                  Expanded(child: child),
+                ],
+              ),
+            const GeofenceAlertOverlay(),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class ConnectivityBanner extends ConsumerWidget {
+  const ConnectivityBanner({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(connectivityStateProvider);
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      height: isOnline ? 0.0 : (32.0 + topPadding),
+      width: double.infinity,
+      color: AppColors.warningAmber,
+      child: isOnline
+          ? const SizedBox.shrink()
+          : SingleChildScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  SizedBox(height: topPadding),
+                  Container(
+                    height: 32,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '⚠  OFFLINE — Emergency relay active  ⚠',
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }

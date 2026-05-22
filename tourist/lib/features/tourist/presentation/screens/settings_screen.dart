@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/ui_constants.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../sos/presentation/providers/sos_state.dart';
 import '../providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -254,6 +257,8 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                const _SettingsLogo(),
               ]),
             ),
           ),
@@ -489,6 +494,86 @@ class _SettingsToggle extends StatelessWidget {
             onChanged: onChanged,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SettingsLogo extends ConsumerStatefulWidget {
+  const _SettingsLogo();
+
+  @override
+  ConsumerState<_SettingsLogo> createState() => _SettingsLogoState();
+}
+
+class _SettingsLogoState extends ConsumerState<_SettingsLogo> {
+  int _tapCount = 0;
+  DateTime? _lastTapTime;
+
+  void _handleTap() {
+    if (!kDebugMode) return;
+
+    final now = DateTime.now();
+    if (_lastTapTime == null || now.difference(_lastTapTime!) > const Duration(seconds: 2)) {
+      _tapCount = 1;
+    } else {
+      _tapCount++;
+    }
+    _lastTapTime = now;
+
+    if (_tapCount >= 5) {
+      _tapCount = 0;
+      _triggerSosShortcut();
+    }
+  }
+
+  void _triggerSosShortcut() {
+    ref.read(sosStateProvider.notifier).activateSos();
+    context.go('/sos-active');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('🚨 Demo Shortcut: SOS Activated Instantly!'),
+        backgroundColor: AppColors.alertRed,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.travel_explore,
+              color: AppColors.primaryNavy,
+              size: 48,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'TravelSure',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryNavy,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Secure Digital Travel Companion',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: AppColors.mutedText,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -176,4 +176,22 @@ class SosService {
       }
     }
   }
+
+  Future<void> relaySos(Map<String, dynamic> payload) async {
+    try {
+      final response = await _dio.post(
+        '${AppConstants.backendBaseUrl}/api/sos',
+        data: payload,
+        options: Options(
+          connectTimeout: const Duration(seconds: 3),
+          receiveTimeout: const Duration(seconds: 3),
+        ),
+      );
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        debugPrint('Successfully relayed SOS to backend for ${payload['tourist_id']}');
+      }
+    } catch (e) {
+      debugPrint('Failed to relay SOS to backend: $e');
+    }
+  }
 }
