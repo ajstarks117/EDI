@@ -7,6 +7,7 @@ const fs = require('fs');
 const { authLimiter } = require('../middleware/rateLimiter');
 const authController = require('../controllers/authController');
 const { validateRegistration } = require('../middleware/registrationValidator');
+const { auditLog } = require('../middleware/auditLog');
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, '../../uploads');
@@ -30,7 +31,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-router.post('/register',              authLimiter, upload.single('profile_photo'), validateRegistration, authController.register);
+router.post('/register',              authLimiter, upload.single('profile_photo'), validateRegistration, auditLog('REGISTER_TOURIST'), authController.register);
 router.post('/login',                 authLimiter, authController.login);
 router.post('/authority/login',        authLimiter, authController.authorityLogin);
 router.post('/refresh-token',         authLimiter, authController.refreshToken);

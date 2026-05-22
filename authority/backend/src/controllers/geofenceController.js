@@ -29,7 +29,16 @@ const listZones = async (req, res, next) => {
       FROM geofence_zones 
       WHERE is_active = true
     `);
-    return success(res, { zones: rows });
+    const zones = rows.map(zone => {
+      let polygonCoordinates = [];
+      if (zone.geom && zone.geom.type === 'Polygon' && zone.geom.coordinates) {
+        polygonCoordinates = zone.geom.coordinates[0] || [];
+      }
+      // Omit geom and attach polygonCoordinates instead
+      const { geom, ...rest } = zone;
+      return { ...rest, polygonCoordinates };
+    });
+    return success(res, { zones });
   } catch (err) {
     return next(err);
   }
@@ -68,11 +77,23 @@ const createZone = async (req, res, next) => {
       [name, zone_type, JSON.stringify(geom), advisory_text, req.authority.id]
     );
 
-    const zone = rows[0];
+    let polygonCoordinatesOut = [];
+    if (rows[0].geom && rows[0].geom.coordinates) {
+      polygonCoordinatesOut = rows[0].geom.coordinates[0] || [];
+    }
+    const { geom: _geom, ...restZone } = rows[0];
+    const zone = { ...restZone, polygonCoordinates: polygonCoordinatesOut };
+
+    const zonePayload = {
+      action: 'create',
+      zone,
+      name: zone.name,
+      type: zone.zone_type === 'safe' ? 'info' : (zone.zone_type === 'warning' ? 'warning' : 'danger')
+    };
 
     // Broadcast to all tourists and authorities
-    broadcastToAuthorities(WS_EVENTS.ZONE_UPDATE, { action: 'create', zone });
-    broadcastToAllTourists(WS_EVENTS.ZONE_UPDATE, { action: 'create', zone });
+    broadcastToAuthorities(WS_EVENTS.ZONE_UPDATE, zonePayload);
+    broadcastToAllTourists(WS_EVENTS.ZONE_UPDATE, zonePayload);
 
     return res.status(201).json({ success: true, data: { zone } });
   } catch (err) {
@@ -116,9 +137,22 @@ const updateZone = async (req, res, next) => {
       return error(res, 'Zone not found', 404);
     }
 
-    const zone = rows[0];
-    broadcastToAuthorities(WS_EVENTS.ZONE_UPDATE, { action: 'update', zone });
-    broadcastToAllTourists(WS_EVENTS.ZONE_UPDATE, { action: 'update', zone });
+    let polygonCoordinatesOut = [];
+    if (rows[0].geom && rows[0].geom.coordinates) {
+      polygonCoordinatesOut = rows[0].geom.coordinates[0] || [];
+    }
+    const { geom: _geom, ...restZone } = rows[0];
+    const zone = { ...restZone, polygonCoordinates: polygonCoordinatesOut };
+    
+    const zonePayload = {
+      action: 'update',
+      zone,
+      name: zone.name,
+      type: zone.zone_type === 'safe' ? 'info' : (zone.zone_type === 'warning' ? 'warning' : 'danger')
+    };
+    
+    broadcastToAuthorities(WS_EVENTS.ZONE_UPDATE, zonePayload);
+    broadcastToAllTourists(WS_EVENTS.ZONE_UPDATE, zonePayload);
 
     return success(res, { zone });
   } catch (err) {

@@ -3,13 +3,14 @@
 const router = require('express').Router();
 const { verifyToken }       = require('../middleware/auth');
 const { verifyAuthority }   = require('../middleware/authorityAuth');
+const { auditLog }          = require('../middleware/auditLog');
 const blockchainController  = require('../controllers/blockchainController');
 
 // ── No-auth route (must be declared BEFORE verifyToken-guarded routes) ─────────
 
 // Offline QR scan — verifies a tourist identity by re-deriving hash from DB.
 // Returns 200 { verified, tourist, block_hash } or { verified:false, tamper_detected:true }
-router.get('/verify/:touristId', blockchainController.verifyByQr);
+router.get('/verify/:touristId', auditLog('VERIFY_BLOCKCHAIN'), blockchainController.verifyByQr);
 
 // ── Authenticated routes ────────────────────────────────────────────────────────
 
@@ -22,6 +23,7 @@ router.post('/issue',
 // Verify by tourist_id or identity_hash in body — authenticated users
 router.post('/verify',
   verifyToken,
+  auditLog('VERIFY_BLOCKCHAIN'),
   blockchainController.verifyIdentity
 );
 

@@ -46,6 +46,9 @@ const chat = async (req, res, next) => {
       result.intent = intent;
     }
 
+    // Map 'response' to 'text' for mobile client compatibility
+    result.text = result.response;
+
     return success(res, result);
   } catch (err) {
     return next(err);

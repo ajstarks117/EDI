@@ -53,8 +53,10 @@ const batchSync = async (req, res, next) => {
     const latestPos = positions[positions.length - 1];
 
     broadcastToAuthorities(WS_EVENTS.TOURIST_LOCATION, {
-      tourist_id: req.tourist.tourist_id,
-      positions: [latestPos]
+      id: req.tourist.tourist_id,
+      lat: latestPos.lat,
+      lng: latestPos.lng,
+      status: 'safe' // Default status per contract
     });
 
     return success(res, { saved: positions.length });
