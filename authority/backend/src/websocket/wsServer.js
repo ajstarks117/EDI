@@ -14,8 +14,11 @@ const positionCache = new Map();
 const initWebSocketServer = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+      origin: (origin, callback) => {
+        callback(null, origin || '*');
+      },
       methods: ['GET', 'POST'],
+      credentials: true
     },
     pingInterval: 25000,
     pingTimeout: 10000,

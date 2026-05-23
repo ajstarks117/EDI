@@ -41,7 +41,12 @@ const app = express();
 // ── Global Middleware ─────────────────────────────────────────────────────────
 app.use(helmet());
 
-app.use(cors({ origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*' }));
+app.use(cors({
+  origin: (origin, callback) => {
+    callback(null, origin || '*');
+  },
+  credentials: true
+}));
 
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '2mb' }));
