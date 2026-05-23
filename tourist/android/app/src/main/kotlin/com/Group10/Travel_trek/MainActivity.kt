@@ -94,7 +94,11 @@ class MainActivity : FlutterActivity() {
             val uuid = UUID.fromString(serviceUuidStr)
             val parcelUuid = ParcelUuid(uuid)
 
-            val data = AdvertiseData.Builder()
+            val advertiseData = AdvertiseData.Builder()
+                .addServiceUuid(parcelUuid)
+                .build()
+
+            val scanResponseData = AdvertiseData.Builder()
                 .addServiceData(parcelUuid, payload)
                 .build()
 
@@ -111,7 +115,7 @@ class MainActivity : FlutterActivity() {
             }
             advertiseCallback = callback
 
-            advertiser?.startAdvertising(settings, data, callback)
+            advertiser?.startAdvertising(settings, advertiseData, scanResponseData, callback)
             return true
         } catch (e: Exception) {
             Log.e("MainActivity", "Error in startBleAdvertising", e)
