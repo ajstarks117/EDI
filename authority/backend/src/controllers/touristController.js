@@ -183,8 +183,118 @@ const listTourists = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/tourists/registry
+ * Public endpoint for the authority dashboard.
+ * Returns an array of all registered tourists with profile, contact, and identity info.
+ */
+const listTouristRegistry = async (req, res, next) => {
+  try {
+    const { search, status } = req.query;
+
+    let whereClause = '';
+    const params = [];
+
+    if (status === 'active') {
+      whereClause = 'WHERE t.is_active = true';
+    } else if (status === 'inactive') {
+      whereClause = 'WHERE t.is_active = false';
+    }
+
+    // Fetch all tourists with emergency contacts and blockchain identity status
+    const touristsRes = await query(`
+      SELECT 
+        t.id,
+        t.tourist_id,
+        t.phone,
+        t.full_name,
+        t.nationality,
+        t.id_document_type,
+        t.blood_group,
+        t.medical_conditions,
+        t.profile_photo_url,
+        t.region_code,
+        t.languages,
+        t.is_active,
+        t.created_at,
+        COALESCE(
+          json_agg(
+            json_build_object('name', ec.name, 'phone', ec.phone, 'relation', ec.relation)
+            ORDER BY ec.name
+          ) FILTER (WHERE ec.id IS NOT NULL),
+          '[]'
+        ) AS emergency_contacts,
+        (SELECT identity_hash FROM blockchain_ids bi 
+         WHERE bi.tourist_id = t.id 
+         ORDER BY bi.issued_at DESC LIMIT 1) AS identity_hash,
+        (SELECT block_hash FROM blockchain_ids bi 
+         WHERE bi.tourist_id = t.id 
+         ORDER BY bi.issued_at DESC LIMIT 1) AS block_hash,
+        (SELECT issued_at FROM blockchain_ids bi 
+         WHERE bi.tourist_id = t.id 
+         ORDER BY bi.issued_at DESC LIMIT 1) AS identity_issued_at,
+        (SELECT lat FROM gps_logs gl 
+         WHERE gl.tourist_id = t.id 
+         ORDER BY gl.captured_at DESC LIMIT 1) AS last_lat,
+        (SELECT lng FROM gps_logs gl 
+         WHERE gl.tourist_id = t.id 
+         ORDER BY gl.captured_at DESC LIMIT 1) AS last_lng
+      FROM tourists t
+      LEFT JOIN emergency_contacts ec ON ec.tourist_id = t.id
+      ${whereClause}
+      GROUP BY t.id
+      ORDER BY t.created_at DESC
+    `, params);
+
+    let tourists = touristsRes.rows.map(t => ({
+      id: t.id,
+      tourist_id: t.tourist_id,
+      phone: t.phone,
+      full_name: t.full_name,
+      nationality: t.nationality,
+      id_document_type: t.id_document_type,
+      blood_group: t.blood_group,
+      medical_conditions: t.medical_conditions,
+      profile_photo_url: t.profile_photo_url || `https://i.pravatar.cc/150?u=${t.tourist_id}`,
+      region_code: t.region_code,
+      languages: t.languages || [],
+      is_active: t.is_active,
+      created_at: t.created_at,
+      emergency_contacts: t.emergency_contacts,
+      identity_hash: t.identity_hash,
+      block_hash: t.block_hash,
+      identity_issued_at: t.identity_issued_at,
+      last_lat: t.last_lat ? parseFloat(t.last_lat) : null,
+      last_lng: t.last_lng ? parseFloat(t.last_lng) : null,
+      is_identity_verified: !!t.identity_hash
+    }));
+
+    // Apply search filter in-memory (name, phone, tourist_id, nationality)
+    if (search) {
+      const s = search.toLowerCase();
+      tourists = tourists.filter(t =>
+        (t.full_name && t.full_name.toLowerCase().includes(s)) ||
+        (t.phone && t.phone.includes(s)) ||
+        (t.tourist_id && t.tourist_id.toLowerCase().includes(s)) ||
+        (t.nationality && t.nationality.toLowerCase().includes(s))
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        tourists,
+        total: tourists.length
+      }
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
 module.exports = {
   listTourists,
+  listTouristRegistry,
   getTourist:    notImplemented,
   createTourist: notImplemented,
   updateTourist: notImplemented,
